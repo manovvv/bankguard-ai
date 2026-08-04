@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Executive Dashboard - Credit Risk & Fraud Analytics",
+    page_title="Executive Dashboard - Credit Risk & Multi-Factor Fraud Analytics",
     page_icon="📊",
     layout="wide"
 )
@@ -17,11 +17,11 @@ def format_rupiah(val):
     return f"Rp {val:,.0f}".replace(",", ".")
 
 # Header Utama
-st.title("📊 Credit Risk & Fraud Analytics Platform")
+st.title("📊 Credit Risk & Multi-Factor Fraud Analytics Platform")
 st.markdown("""
 Aplikasi ini merupakan platform analisis keputusan yang **memisahkan dua domain analisis utama**:
 1. **💳 Loan Risk Analytics**: Berfokus pada kelayakan kredit nasabah, rasio pendapatan terhadap pinjaman, dan estimasi risiko gagal bayar (*default*).
-2. **🛡️ Fraud Monitoring Analytics**: Berfokus pada pemantauan pola transaksi abnormal, deteksi anomali, dan pencegahan transaksi mencurigakan.
+2. **🛡️ Fraud Monitoring Analytics**: Berfokus pada pemantauan pola transaksi abnormal berdasarkan **Nominal Transaksi**, **Frekuensi Transaksi Harian**, dan **Waktu Transaksi (Jam Malam/Ganjil)**.
 """)
 st.markdown("---")
 
@@ -45,6 +45,8 @@ def generate_data():
         'Age': np.random.randint(18, 65, size=n),
         'Income': np.random.normal(12000000, 3000000, size=n).clip(3000000, 30000000),
         'Transaction_Amount': np.random.exponential(scale=1500000, size=n),
+        'Tx_Frequency_Daily': np.random.poisson(lam=3, size=n) + 1,  # Frekuensi transaksi harian
+        'Tx_Hour': np.random.randint(0, 24, size=n),                  # Waktu transaksi (0-23)
         'Risk_Score': np.random.uniform(0, 1, size=n),
         'Category': np.random.choice(['Personal', 'Retail', 'Corporate'], size=n),
         'Loan_Status': np.random.choice(['Good Standing', 'Default Risk'], size=n, p=[0.85, 0.15]),
@@ -88,8 +90,8 @@ st.markdown("---")
 # ----------------------------------------------------
 # 🛡️ KATEGORI 2: FRAUD MONITORING ANALYTICS
 # ----------------------------------------------------
-st.header("🛡️ 2. Analisis Deteksi Kecurangan (Fraud Monitoring)")
-st.caption("Fokus pada deteksi aktivitas transaksi abnormal dan anomali perilaku nasabah.")
+st.header("🛡️ 2. Analisis Deteksi Kecurangan Multi-Faktor (Fraud Monitoring)")
+st.caption("Fokus pada deteksi anomali berdasarkan frekuensi harian, waktu transaksi (jam malam), dan nominal.")
 
 # Metrics Fraud
 m_fraud1, m_fraud2, m_fraud3, m_fraud4 = st.columns(4)
@@ -103,15 +105,16 @@ st.write("**Eksplorasi Data (EDA - Fraud Monitoring):**")
 
 eda_f1, eda_f2 = st.columns(2)
 with eda_f1:
-    fig_f1 = px.pie(df, names='Category', values=(df['Fraud_Flag']=='Suspicious Fraud').astype(int),
-                    title="Distribusi Indikasi Fraud berdasarkan Segmen",
-                    hole=0.4, color_discrete_sequence=px.colors.qualitative.Set2)
+    fig_f1 = px.histogram(df, x='Tx_Hour', color='Fraud_Flag', barmode='overlay',
+                          title="Distribusi Waktu Transaksi (Jam 0-23) vs Indikasi Fraud",
+                          color_discrete_map={'Normal Transaction': '#3498db', 'Suspicious Fraud': '#e67e22'})
     st.plotly_chart(apply_plotly_theme(fig_f1), use_container_width=True)
 
 with eda_f2:
-    fig_f2 = px.histogram(df, x='Risk_Score', color='Fraud_Flag', barmode='overlay',
-                          title="Skor Anomali Internal vs Indikasi Fraud",
-                          color_discrete_map={'Normal Transaction': '#3498db', 'Suspicious Fraud': '#e67e22'})
+    fig_f2 = px.scatter(df, x='Tx_Frequency_Daily', y='Transaction_Amount', color='Fraud_Flag',
+                        title="Frekuensi Transaksi Harian vs Nominal Transaksi",
+                        color_discrete_map={'Normal Transaction': '#3498db', 'Suspicious Fraud': '#e67e22'},
+                        labels={'Tx_Frequency_Daily': 'Frekuensi Transaksi / Hari'})
     st.plotly_chart(apply_plotly_theme(fig_f2), use_container_width=True)
 
 st.markdown("---")
@@ -137,7 +140,7 @@ with tab_data:
         st.dataframe(desc_df, use_container_width=True)
 
 with tab_model:
-    st.write("**Metrik Evaluasi Terpisah (Loan Classifier vs Fraud Detector):**")
+    st.write("**Metrik Evaluasi Terpisah (Loan Classifier vs Multi-Factor Fraud Detector):**")
     eval_df = pd.DataFrame({
         'Model Algorithm': ['Logistic Regression', 'Random Forest', 'XGBoost Classifier'],
         'Accuracy (Loan Risk)': [0.82, 0.91, 0.94],
@@ -152,35 +155,50 @@ with tab_model:
 st.markdown("---")
 
 # ----------------------------------------------------
-# 🎮 SIMULATOR KEPUTUSAN TERPISAH
+# 🎮 SIMULATOR KEPUTUSAN MULTI-FAKTOR
 # ----------------------------------------------------
-st.subheader("🎮 Simulator Pengambilan Keputusan Real-Time")
-st.write("Masukan data transaksi di bawah ini untuk melihat evaluasi terpisah antara kelayakan kredit dan kriteria kecurangan:")
+st.subheader("🎮 Simulator Pengambilan Keputusan Real-Time (Loan & Fraud)")
+st.write("Masukan data transaksi di bawah ini untuk menguji kelayakan loan dan potensi fraud berdasarkan nominal, frekuensi, dan waktu transaksi:")
 
 with st.form("prediction_form"):
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
         input_age = st.number_input("Usia Nasabah", value=30, step=1)
         input_income = st.number_input("Pendapatan Tahunan (Rp)", value=12000000, step=500000)
         st.caption(f"Terbaca: **{format_rupiah(input_income)}**")
     with c2:
-        input_tx = st.number_input("Nominal Transaksi/Pengajuan (Rp)", value=2500000, step=100000)
+        input_tx = st.number_input("Nominal Transaksi (Rp)", value=2500000, step=100000)
         st.caption(f"Terbaca: **{format_rupiah(input_tx)}**")
         input_cat = st.selectbox("Kategori Segmen", ["Personal", "Retail", "Corporate"])
     with c3:
-        input_score = st.slider("Skor Anomali Perilaku (0 = Normal, 1 = Sangat Mencurigakan)", 0.0, 1.0, 0.35)
+        input_freq = st.number_input("Frekuensi Transaksi Hari Ini", value=2, step=1)
+        input_hour = st.slider("Waktu Transaksi (Jam 00:00 - 23:00)", 0, 23, 14)
+    with c4:
+        input_score = st.slider("Skor Anomali Perilaku (0-1)", 0.0, 1.0, 0.25)
         
     submit = st.form_submit_button("🚀 Jalankan Evaluasi Keputusan", use_container_width=True)
 
 if submit:
     safe_income = max(input_income, 1) if input_income > 0 else 1
     
-    # Formula Evaluasi Loan Risk
+    # 1. Formula Evaluasi Loan Risk (Berfokus pada rasio finansial)
     loan_risk = (input_tx / safe_income) * 1.8 + (input_score * 0.3)
     loan_risk = min(max(loan_risk, 0.05), 0.98)
     
-    # Formula Evaluasi Fraud Risk
-    fraud_risk = (input_tx / safe_income) * 1.1 + (input_score * 0.85)
+    # 2. Formula Multi-Faktor Fraud Risk
+    # Faktor Jam Malam (Jam 23.00 - 04.00 dianggap riskan)
+    is_night = 1 if (input_hour >= 23 or input_hour <= 4) else 0
+    night_factor = 0.25 if is_night else 0.0
+    
+    # Faktor Frekuensi Tinggi (> 8 kali transaksi per hari dianggap anomali)
+    freq_factor = min((input_freq / 10) * 0.3, 0.3)
+    
+    # Faktor Nominal & Skor Anomali
+    tx_factor = (input_tx / safe_income) * 0.8
+    score_factor = input_score * 0.4
+    
+    # Total Skor Fraud
+    fraud_risk = tx_factor + night_factor + freq_factor + score_factor
     fraud_risk = min(max(fraud_risk, 0.02), 0.99)
 
     col_sim_loan, col_sim_fraud = st.columns(2)
@@ -209,7 +227,7 @@ if submit:
             st.success("✅ **Rekomendasi Loan: DISETUJUI**\n\nProfil rasio pendapatan dan nominal pengajuan memenuhi batas kriteria.")
 
     with col_sim_fraud:
-        st.markdown("### 🛡️ 2. Hasil Evaluasi Indikasi Fraud")
+        st.markdown("### 🛡️ 2. Hasil Evaluasi Indikasi Fraud (Multi-Faktor)")
         fig_gauge_fraud = go.Figure(go.Indicator(
             mode="gauge+number",
             value=fraud_risk * 100,
@@ -226,10 +244,21 @@ if submit:
         ))
         st.plotly_chart(apply_plotly_theme(fig_gauge_fraud), use_container_width=True)
         
+        # Alasan Peringatan Fraud
+        fraud_reasons = []
+        if is_night:
+            fraud_reasons.append("Waktu transaksi di jam malam (23:00 - 04:00)")
+        if input_freq > 8:
+            fraud_reasons.append(f"Frekuensi transaksi harian sangat tinggi ({input_freq}x)")
+        if input_score > 0.6:
+            fraud_reasons.append("Skor anomali perilaku tinggi")
+        if (input_tx / safe_income) > 0.3:
+            fraud_reasons.append("Nominal transaksi melonjak tidak wajar")
+
         if fraud_risk > 0.4:
-            st.warning("⚠️ **Peringatan Fraud: TRANSAKSI MENCURIGAKAN**\n\nSistem mendeteksi anomali tinggi pada skor perilaku transaksi.")
+            st.warning("⚠️ **Peringatan Fraud: TRANSAKSI MENCURIGAKAN**\n\n**Indikator Terdeteksi:**\n- " + "\n- ".join(fraud_reasons))
         else:
-            st.info("🛡️ **Pemeriksaan Fraud: TRANSAKSI NORMAL**\n\nAktivitas transaksi berada dalam pola wajar.")
+            st.info("🛡️ **Pemeriksaan Fraud: TRANSAKSI NORMAL**\n\nWaktu, frekuensi, dan nominal transaksi berada dalam ambang batas wajar.")
 
 st.markdown("---")
-st.caption("Executive Dashboard & Analytics Platform — Dual Risk Decision System")
+st.caption("Executive Dashboard & Analytics Platform — Multi-Factor Fraud & Loan System")
