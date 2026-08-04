@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Executive Dashboard & Analytics",
+    page_title="Kelompok 14 DSC - Executive Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -14,7 +14,7 @@ st.set_page_config(
 st.markdown("""
 <style>
     .block-container {
-        padding-top: 1.2rem;
+        padding-top: 2.5rem;
         padding-bottom: 2rem;
         padding-left: 1.5rem;
         padding-right: 1.5rem;
@@ -26,12 +26,13 @@ st.markdown("""
         overflow-x: auto !important;
         gap: 10px !important;
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-        padding: 10px 14px !important;
+        padding: 12px 16px !important;
         border-radius: 14px !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         scrollbar-width: none;
-        margin-bottom: 20px;
+        margin-top: 10px;
+        margin-bottom: 25px;
     }
     div[role="radiogroup"]::-webkit-scrollbar {
         display: none;
@@ -85,6 +86,7 @@ df = generate_data()
 menu = st.radio(
     label="Main Navigation",
     options=[
+        "🏠 Home",
         "📋 1. Executive Summary",
         "🎯 2. Background",
         "🗃️ 3. Data Introduction",
@@ -96,7 +98,37 @@ menu = st.radio(
     label_visibility="collapsed"
 )
 
-if menu == "📋 1. Executive Summary":
+if menu == "🏠 Home":
+    st.title("🏠 Welcome to Data Science Project Portal")
+    st.caption("Dashboard Analytics & Interactive Presentation Platform")
+    st.markdown("---")
+
+    col_hero1, col_hero2 = st.columns([1.5, 1])
+    
+    with col_hero1:
+        st.subheader("📌 Project Overview")
+        st.write("""
+        Selamat datang di portal presentasi interaktif **Kelompok 14 Data Science Club (DSC)**. 
+        Aplikasi ini dirancang untuk menyajikan alur analisis data secara terstruktur, mulai dari *Executive Summary*, 
+        latar belakang masalah, pendataan, eksplorasi data (EDA), pemodelan Machine Learning, hingga rekomendasi keputusan bisnis.
+        """)
+        st.info("💡 **Petunjuk Navigation**: Gunakan bar navigasi di bagian atas untuk berpindah antar bab presentasi.")
+
+    with col_hero2:
+        st.subheader("👥 Kelompok 14 DSC")
+        members_data = pd.DataFrame({
+            "ID Member": ["DSC031", "DSC037", "DSC024", "DSC060", "DSC062"],
+            "Nama Anggota": [
+                "Aura Renata Anasiyya Azka",
+                "Muhammad Ali Mukahfi",
+                "Muhammad Arrizqi Putra Ramadhan",
+                "Laskar Brahimanov Riadi",
+                "Bungaria Nathasia Oktavia Siahaan"
+            ]
+        })
+        st.dataframe(members_data, use_container_width=True, hide_index=True)
+
+elif menu == "📋 1. Executive Summary":
     st.title("📋 Executive Summary")
     st.caption("Ringkasan Eksekutif & Temuan Utama Proyek Analytics")
     st.markdown("---")
@@ -326,4 +358,4 @@ elif menu == "💡 6. Recommendation & Action Plan":
         st.success("✅ Seluruh rencana aksi dijadwalkan dapat berjalan penuh pada kuartal akhir.")
 
 st.markdown("---")
-st.caption("Dashboard Analytics Platform — Dibuat untuk Presentasi & Pelaporan Internal")
+st.caption("Dashboard Analytics Platform — Dibuat oleh Kelompok 14 DSC")
