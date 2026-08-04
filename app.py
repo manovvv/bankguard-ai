@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 BASE_DIR = Path(__file__).resolve().parent if "__file__" in locals() else Path(".")
-MODELS_DIR = BASE_DIR
+MODELS_DIR = BASE_DIR / "models"
 
 
 @st.cache_resource
