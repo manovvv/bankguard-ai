@@ -5,38 +5,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Kelompok 14 DSC - Executive Dashboard",
+    page_title="Executive Dashboard & Analytics",
     page_icon="📊",
     layout="wide"
 )
 
 st.title("📊 Executive Dashboard & Risk Analytics")
-st.caption("Platform Analytics Interaktif — Dibuat oleh Kelompok 14 Data Science Club (DSC)")
-st.markdown("---")
-
-col_home1, col_home2 = st.columns([1.5, 1])
-
-with col_home1:
-    st.subheader("📌 Project Overview")
-    st.write("""
-    Dashboard ini menyajikan hasil analisis data terpadu untuk evaluasi kelayakan dan prediksi risiko transaksi nasabah. 
-    Menggabungkan analisis statistik, eksplorasi pola data (EDA), serta pemodelan Machine Learning secara *real-time*.
-    """)
-
-with col_home2:
-    st.subheader("👥 Member Kelompok 14 DSC")
-    members_data = pd.DataFrame({
-        "ID Member": ["DSC031", "DSC037", "DSC024", "DSC060", "DSC062"],
-        "Nama Anggota": [
-            "Aura Renata Anasiyya Azka",
-            "Muhammad Ali Mukahfi",
-            "Muhammad Arrizqi Putra Ramadhan",
-            "Laskar Brahimanov Riadi",
-            "Bungaria Nathasia Oktavia Siahaan"
-        ]
-    })
-    st.dataframe(members_data, use_container_width=True, hide_index=True)
-
+st.caption("Platform Analytics Interaktif untuk Evaluasi Transaksi & Risiko Risk Model")
 st.markdown("---")
 
 def apply_plotly_theme(fig):
@@ -180,4 +155,4 @@ if submit:
             st.write("Profil risiko berada di dalam ambang toleransi yang aman.")
 
 st.markdown("---")
-st.caption("Dashboard Analytics Platform — Dibuat oleh Kelompok 14 DSC")
+st.caption("Dashboard Analytics Platform — System Live Output")
