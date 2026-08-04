@@ -108,7 +108,7 @@ if menu == "🏠 Home":
     with col_hero1:
         st.subheader("📌 Project Overview")
         st.write("""
-        Selamat datang di portal presentasi interaktif **Kelompok 14 Data Science Course (DSC)**. 
+        Selamat datang di portal presentasi interaktif **Kelompok 14 Data Science Club (DSC)**. 
         Aplikasi ini dirancang untuk menyajikan alur analisis data secara terstruktur, mulai dari *Executive Summary*, 
         latar belakang masalah, pendataan, eksplorasi data (EDA), pemodelan Machine Learning, hingga rekomendasi keputusan bisnis.
         """)
@@ -198,7 +198,12 @@ elif menu == "🗃️ 3. Data Introduction":
         col1, col2 = st.columns(2)
         with col1:
             st.write("**Deskripsi Data Numerik:**")
-            st.dataframe(df.describe().T, use_container_width=True)
+            desc_df = df.describe().T.rename(columns={
+                '25%': 'Q1',
+                '50%': 'Q2 (Median)',
+                '75%': 'Q3'
+            })
+            st.dataframe(desc_df, use_container_width=True)
         with col2:
             st.write("**Info Kualitas Data:**")
             info_df = pd.DataFrame({
