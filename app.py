@@ -102,6 +102,9 @@ elif menu == "🚨 Fraud Detection Simulator":
         if submit:
             input_data = pd.DataFrame(0.0, index=[0], columns=features)
             
+            # Peta konversi nilai teks ke angka numerik
+            account_map = {"Savings": 0, "Checking": 1, "Premium": 2}
+            
             val_map = {
                 "amount": amount,
                 "customer_tx_count": customer_tx_count,
@@ -111,25 +114,23 @@ elif menu == "🚨 Fraud Detection Simulator":
                 "transaction_frequency": transaction_frequency,
                 "weekend_transaction_indicator": weekend_indicator,
                 "night_transaction_indicator": night_indicator,
-                "account_type": account_type,
+                "account_type": account_map.get(account_type, 0),
             }
             
             for k, v in val_map.items():
                 if k in input_data.columns:
-                    input_data[k] = v
+                    input_data[k] = float(v)
 
-            # Penanganan khusus jika model menggunakan pandas categorical
-            if hasattr(model, "pandas_categorical") and model.pandas_categorical is not None:
-                for col_idx, cats in enumerate(model.pandas_categorical):
-                    col_name = features[col_idx] if col_idx < len(features) else None
-                    if col_name and col_name in input_data.columns:
-                        input_data[col_name] = pd.Categorical(input_data[col_name], categories=cats)
-            else:
-                for col in input_data.select_dtypes(include=['object']).columns:
-                    input_data[col] = input_data[col].astype('category')
+            # Ekstrak data sebagai NumPy Array agar aman dari masalah metadata LightGBM
+            X_input = input_data.values
 
-            pred = model.predict(input_data)[0]
-            prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+            try:
+                pred = model.predict(X_input)[0]
+                prob = model.predict_proba(X_input)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+            except Exception:
+                # Fallback jika model membutuhkan DataFrame murni numerik
+                pred = model.predict(input_data)[0]
+                prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
 
             st.markdown("---")
             st.subheader("Hasil Analisis Transaksi:")
@@ -177,6 +178,7 @@ elif menu == "💳 Loan Default Risk Predictor":
             input_data = pd.DataFrame(0.0, index=[0], columns=features)
             
             dti = loan_amount / max(customer_income, 1.0)
+            loan_map = {"Personal": 0, "Auto": 1, "Mortgage": 2, "Business": 3}
             
             val_map = {
                 "loan_amount": loan_amount,
@@ -187,24 +189,21 @@ elif menu == "💳 Loan Default Risk Predictor":
                 "account_balance": account_balance,
                 "customer_age": customer_age,
                 "support_ticket_count": support_ticket_count,
-                "loan_type": loan_type,
+                "loan_type": loan_map.get(loan_type, 0),
             }
 
             for k, v in val_map.items():
                 if k in input_data.columns:
-                    input_data[k] = v
+                    input_data[k] = float(v)
 
-            if hasattr(model, "pandas_categorical") and model.pandas_categorical is not None:
-                for col_idx, cats in enumerate(model.pandas_categorical):
-                    col_name = features[col_idx] if col_idx < len(features) else None
-                    if col_name and col_name in input_data.columns:
-                        input_data[col_name] = pd.Categorical(input_data[col_name], categories=cats)
-            else:
-                for col in input_data.select_dtypes(include=['object']).columns:
-                    input_data[col] = input_data[col].astype('category')
+            X_input = input_data.values
 
-            pred = model.predict(input_data)[0]
-            prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+            try:
+                pred = model.predict(X_input)[0]
+                prob = model.predict_proba(X_input)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+            except Exception:
+                pred = model.predict(input_data)[0]
+                prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
 
             st.markdown("---")
             st.subheader("Hasil Evaluasi Kredit:")
