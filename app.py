@@ -8,8 +8,51 @@ st.set_page_config(
     page_title="Executive Dashboard & Analytics",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
+
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 2rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    div[role="radiogroup"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 10px !important;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        padding: 10px 14px !important;
+        border-radius: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        scrollbar-width: none;
+        margin-bottom: 20px;
+    }
+    div[role="radiogroup"]::-webkit-scrollbar {
+        display: none;
+    }
+    div[role="radiogroup"] label {
+        white-space: nowrap !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        transition: all 0.3s ease;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 def apply_plotly_theme(fig):
     fig.update_layout(
@@ -39,21 +82,19 @@ def generate_data():
 
 df = generate_data()
 
-st.sidebar.title("📌 Navigation Menu")
-menu = st.sidebar.radio(
-    "Pilih Topik Presentasi:",
-    [
+menu = st.radio(
+    label="Main Navigation",
+    options=[
         "📋 1. Executive Summary",
         "🎯 2. Background",
         "🗃️ 3. Data Introduction",
         "📊 4. Exploratory Data Analysis",
-        "🤖 5. Modelling & Evaluation",
+        "⚙️ 5. Modelling & Evaluation",
         "💡 6. Recommendation & Action Plan"
-    ]
+    ],
+    horizontal=True,
+    label_visibility="collapsed"
 )
-
-st.sidebar.markdown("---")
-st.sidebar.info("💡 **Tips Presentasi**: Gunakan sidebar untuk berpindah section sesuai alur rapat/presentasi.")
 
 if menu == "📋 1. Executive Summary":
     st.title("📋 Executive Summary")
@@ -181,8 +222,8 @@ elif menu == "📊 4. Exploratory Data Analysis":
         fig4 = px.imshow(numeric_df.corr(), text_auto=".2f", color_continuous_scale='Viridis', title="Heatmap Korelasi")
         st.plotly_chart(apply_plotly_theme(fig4), use_container_width=True)
 
-elif menu == "🤖 5. Modelling & Evaluation":
-    st.title("🤖 Modelling & Performance Evaluation")
+elif menu == "⚙️ 5. Modelling & Evaluation":
+    st.title("⚙️ Modelling & Performance Evaluation")
     st.caption("Pengembangan Model Machine Learning dan Simulator Analisis")
     st.markdown("---")
 
