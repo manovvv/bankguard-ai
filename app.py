@@ -5,17 +5,27 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="Executive Dashboard & Analytics",
-    page_icon="📊",
+    page_title="Executive Dashboard - Credit & Risk Decision System",
+    page_icon="🛡️",
     layout="wide"
 )
 
 def format_rupiah(val):
     """Fungsi pembantu untuk format angka ke Rupiah dengan titik pemisah ribuan"""
+    if val is None:
+        return "Rp 0"
     return f"Rp {val:,.0f}".replace(",", ".")
 
-st.title("📊 Executive Dashboard & Risk Analytics")
-st.caption("Platform Analytics Interaktif untuk Evaluasi Transaksi & Risiko Risk Model")
+# Header Utama & Penjelasan Fungsi Aplikasi
+st.title("🛡️ Credit Risk Decision & Analytics Platform")
+st.markdown("""
+Aplikasi ini dirancang sebagai **sistem analisis dan keputusan risiko kredit berbasis Artificial Intelligence (AI)**. 
+
+**Fungsi Utama Aplikasi:**
+1. **Monitoring Profil Transaksi**: Menganalisis sebaran transaksi, tingkat pendapatan, dan tingkat risiko default nasabah.
+2. **Eksplorasi Data (EDA)**: Menemukan pola korelasi dan sebaran risiko untuk mendukung pembuatan kebijakan kredit.
+3. **Evaluasi & Simulator Prediksi Machine Learning**: Menguji kelayakan pengajuan transaksi/kredit secara instan (real-time) dengan output skor probabilitas risiko.
+""")
 st.markdown("---")
 
 def apply_plotly_theme(fig):
@@ -46,17 +56,19 @@ def generate_data():
 
 df = generate_data()
 
-st.subheader("📈 Key Metrics")
+# Metric Utama Portofolio
+st.subheader("📈 Indikator Utama Portofolio Risiko")
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Total Observasi", f"{len(df):,}".replace(",", "."))
-m2.metric("Rata-Rata Transaksi", format_rupiah(df['Transaction_Amount'].mean()))
+m1.metric("Total Observasi Data", f"{len(df):,}".replace(",", "."))
+m2.metric("Rata-Rata Nominal Transaksi", format_rupiah(df['Transaction_Amount'].mean()))
 m3.metric("Akurasi Model Terbaik", "94.2%", "+2.1%")
 m4.metric("AUC Model Terbaik", "0.96", "+0.03")
 
 st.markdown("---")
 
-st.subheader("🗃️ Preview Dataset & Descriptive Statistics")
-tab1, tab2 = st.tabs(["📄 Sample Data", "📊 Statistics Summary"])
+# Preview Data
+st.subheader("🗃️ Sample Data & Statistik Deskriptif")
+tab1, tab2 = st.tabs(["📄 Sample Dataset", "📊 Ringkasan Statistik"])
 
 with tab1:
     df_display = df.copy()
@@ -74,7 +86,10 @@ with tab2:
 
 st.markdown("---")
 
+# Analisis EDA
 st.subheader("📊 Exploratory Data Analysis (EDA)")
+st.caption("Visualisasi hubungan antar variabel untuk mendeteksi indikator awal risiko kredit.")
+
 eda_col1, eda_col2 = st.columns(2)
 
 with eda_col1:
@@ -91,17 +106,19 @@ eda_col3, eda_col4 = st.columns(2)
 
 with eda_col3:
     fig3 = px.box(df, x='Target_Default', y='Age', color='Target_Default',
-                  title="Perbandingan Usia berdasarkan Status Risk")
+                  title="Perbandingan Usia berdasarkan Status Risk (Default)")
     st.plotly_chart(apply_plotly_theme(fig3), use_container_width=True)
 
 with eda_col4:
     numeric_df = df.select_dtypes(include=[np.number])
-    fig4 = px.imshow(numeric_df.corr(), text_auto=".2f", color_continuous_scale='Viridis', title="Heatmap Korelasi Variabel")
+    fig4 = px.imshow(numeric_df.corr(), text_auto=".2f", color_continuous_scale='Viridis', title="Heatmap Korelasi Variabel Risiko")
     st.plotly_chart(apply_plotly_theme(fig4), use_container_width=True)
 
 st.markdown("---")
 
-st.subheader("⚙️ Model Performance & Simulation")
+# Model Performance & Simulator Interaktif
+st.subheader("⚙️ Performa Model & Simulator Keputusan Kredit")
+st.write("Tabel di bawah menunjukkan perbandingan metrik evaluasi dari berbagai algoritma AI yang diuji:")
 
 eval_df = pd.DataFrame({
     'Model Algorithm': ['Logistic Regression', 'Random Forest', 'XGBoost Classifier'],
@@ -114,25 +131,29 @@ eval_df = pd.DataFrame({
 st.table(eval_df)
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.markdown("#### 🎮 Simulator Prediksi Risk")
+st.markdown("### 🎮 Simulator Keputusan Kelayakan Kredit (Real-time Evaluation)")
+st.write("Masukan parameter di bawah untuk menguji secara otomatis apakah pengajuan disetujui atau ditolak oleh sistem AI:")
 
 with st.form("prediction_form"):
     c1, c2, c3 = st.columns(3)
     with c1:
-        input_age = st.number_input("Usia Nasabah", min_value=18, max_value=80, value=30)
-        input_income = st.number_input("Pendapatan Tahunan (Rp)", min_value=1000000, value=10000000, step=1000000)
-        st.caption(f"Terformat: **{format_rupiah(input_income)}**")
+        # Tanpa batas minimum angka (min_value dihilangkan/diset 0)
+        input_age = st.number_input("Usia Nasabah", value=30, step=1)
+        input_income = st.number_input("Pendapatan Tahunan (Rp)", value=10000000, step=500000)
+        st.caption(f"Format Terbaca: **{format_rupiah(input_income)}**")
     with c2:
-        input_tx = st.number_input("Nominal Transaksi (Rp)", min_value=100000, value=2000000, step=500000)
-        st.caption(f"Terformat: **{format_rupiah(input_tx)}**")
+        input_tx = st.number_input("Nominal Transaksi/Pengajuan (Rp)", value=2000000, step=100000)
+        st.caption(f"Format Terbaca: **{format_rupiah(input_tx)}**")
         input_cat = st.selectbox("Kategori Segmen", ["Personal", "Retail", "Corporate"])
     with c3:
-        input_score = st.slider("Skor Risiko Internal", 0.0, 1.0, 0.45)
+        input_score = st.slider("Skor Risiko Internal (0 = Sangat Aman, 1 = Sangat Riskan)", 0.0, 1.0, 0.45)
         
-    submit = st.form_submit_button("🚀 Jalankan Prediksi AI", use_container_width=True)
+    submit = st.form_submit_button("🚀 Evaluasi Keputusan AI", use_container_width=True)
 
 if submit:
-    calculated_risk = (input_tx / max(input_income, 1)) * 2 + (input_score * 0.5)
+    # Kalkulasi penentuan estimasi risiko
+    safe_income = max(input_income, 1) if input_income > 0 else 1
+    calculated_risk = (input_tx / safe_income) * 2 + (input_score * 0.5)
     calculated_risk = min(max(calculated_risk, 0.05), 0.98)
 
     col_res1, col_res2 = st.columns([1, 1])
@@ -141,7 +162,7 @@ if submit:
             mode="gauge+number",
             value=calculated_risk * 100,
             number={'suffix': "%"},
-            title={'text': "Probabilitas Risiko (Probability of Default)"},
+            title={'text': "Estimasi Probabilitas Default (Risiko)"},
             gauge={
                 'axis': {'range': [0, 100]},
                 'bar': {'color': "red" if calculated_risk > 0.5 else "green"},
@@ -157,11 +178,11 @@ if submit:
     with col_res2:
         st.markdown("<br>", unsafe_allow_html=True)
         if calculated_risk > 0.5:
-            st.error("⛔ **KEPUTUSAN: HIGH RISK / DITOLAK**")
-            st.write("Sistem mendeteksi rasio transaksi terhadap pendapatan terlampau tinggi untuk segmen ini.")
+            st.error("⛔ **REKOMENDASI SISTEM: DITOLAK (HIGH RISK)**")
+            st.write("Nilai transaksi yang diajukan tidak seimbang dengan profil pendapatan dan skor risiko internal nasabah.")
         else:
-            st.success("✅ **KEPUTUSAN: LOW RISK / DISETUJUI**")
-            st.write("Profil risiko berada di dalam ambang toleransi yang aman.")
+            st.success("✅ **REKOMENDASI SISTEM: DISETUJUI (LOW RISK)**")
+            st.write("Pengajuan berada di dalam ambang toleransi batas risiko yang disyaratkan.")
 
 st.markdown("---")
-st.caption("Dashboard Analytics Platform — System Live Output")
+st.caption("Credit Risk Decision System — Analytics & Automated Decision Platform")
