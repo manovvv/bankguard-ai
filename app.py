@@ -10,6 +10,10 @@ st.set_page_config(
     layout="wide"
 )
 
+def format_rupiah(val):
+    """Fungsi pembantu untuk format angka ke Rupiah dengan titik pemisah ribuan"""
+    return f"Rp {val:,.0f}".replace(",", ".")
+
 st.title("📊 Executive Dashboard & Risk Analytics")
 st.caption("Platform Analytics Interaktif untuk Evaluasi Transaksi & Risiko Risk Model")
 st.markdown("---")
@@ -44,8 +48,8 @@ df = generate_data()
 
 st.subheader("📈 Key Metrics")
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("Total Observasi", f"{len(df):,}")
-m2.metric("Rata-Rata Transaksi", f"Rp {df['Transaction_Amount'].mean():,.0f}")
+m1.metric("Total Observasi", f"{len(df):,}".replace(",", "."))
+m2.metric("Rata-Rata Transaksi", format_rupiah(df['Transaction_Amount'].mean()))
 m3.metric("Akurasi Model Terbaik", "94.2%", "+2.1%")
 m4.metric("AUC Model Terbaik", "0.96", "+0.03")
 
@@ -55,7 +59,10 @@ st.subheader("🗃️ Preview Dataset & Descriptive Statistics")
 tab1, tab2 = st.tabs(["📄 Sample Data", "📊 Statistics Summary"])
 
 with tab1:
-    st.dataframe(df.head(10), use_container_width=True)
+    df_display = df.copy()
+    df_display['Income'] = df_display['Income'].apply(format_rupiah)
+    df_display['Transaction_Amount'] = df_display['Transaction_Amount'].apply(format_rupiah)
+    st.dataframe(df_display.head(10), use_container_width=True)
 
 with tab2:
     desc_df = df.describe().T.rename(columns={
@@ -114,8 +121,10 @@ with st.form("prediction_form"):
     with c1:
         input_age = st.number_input("Usia Nasabah", min_value=18, max_value=80, value=30)
         input_income = st.number_input("Pendapatan Tahunan (Rp)", min_value=1000000, value=10000000, step=1000000)
+        st.caption(f"Terformat: **{format_rupiah(input_income)}**")
     with c2:
         input_tx = st.number_input("Nominal Transaksi (Rp)", min_value=100000, value=2000000, step=500000)
+        st.caption(f"Terformat: **{format_rupiah(input_tx)}**")
         input_cat = st.selectbox("Kategori Segmen", ["Personal", "Retail", "Corporate"])
     with c3:
         input_score = st.slider("Skor Risiko Internal", 0.0, 1.0, 0.45)
