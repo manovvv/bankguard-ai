@@ -67,7 +67,7 @@ elif menu == "🚨 Fraud Detection Simulator":
     st.markdown("Masukkan rincian transaksi kartu untuk memprediksi potensi *fraud* secara real-time.")
 
     if "fraud_model" not in artifacts:
-        st.error("Model Fraud tidak ditemukan di folder `models/`.")
+        st.error("Model Fraud (`fraud_model.pkl`) tidak ditemukan di direktori utama.")
     else:
         model = artifacts["fraud_model"]
         features = artifacts["fraud_features"]
@@ -104,6 +104,7 @@ elif menu == "🚨 Fraud Detection Simulator":
                 "transaction_frequency": transaction_frequency,
                 "weekend_transaction_indicator": weekend_indicator,
                 "night_transaction_indicator": night_indicator,
+                "account_type": account_type,
             }
             
             for k, v in val_map.items():
@@ -134,7 +135,7 @@ elif menu == "💳 Loan Default Risk Predictor":
     st.markdown("Evaluasi profil nasabah untuk memprediksi potensi gagal bayar pinjaman (*Credit Default*).")
 
     if "loan_model" not in artifacts:
-        st.error("Model Risiko Pinjaman tidak ditemukan di folder `models/`.")
+        st.error("Model Risiko Pinjaman (`loan_model.pkl`) tidak ditemukan di direktori utama.")
     else:
         model = artifacts["loan_model"]
         features = artifacts["loan_features"]
@@ -172,6 +173,7 @@ elif menu == "💳 Loan Default Risk Predictor":
                 "account_balance": account_balance,
                 "customer_age": customer_age,
                 "support_ticket_count": support_ticket_count,
+                "loan_type": loan_type,
             }
 
             for k, v in val_map.items():
