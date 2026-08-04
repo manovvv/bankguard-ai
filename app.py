@@ -4,9 +4,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
-# ----------------------------------------------------
-# 1. PAGE CONFIGURATION & THEME
-# ----------------------------------------------------
 st.set_page_config(
     page_title="Executive Dashboard - Credit & Fraud Analytics",
     page_icon="📊",
@@ -14,13 +11,11 @@ st.set_page_config(
 )
 
 def format_rupiah(val):
-    """Format angka ke Rupiah dengan titik pemisah ribuan"""
     if val is None or np.isnan(val):
         return "Rp 0"
     return f"Rp {val:,.0f}".replace(",", ".")
 
 def apply_plotly_theme(fig):
-    """Penerapan tema konsisten untuk seluruh visualisasi Plotly"""
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
@@ -32,9 +27,6 @@ def apply_plotly_theme(fig):
     fig.update_yaxes(showgrid=True, gridcolor='rgba(255, 255, 255, 0.1)')
     return fig
 
-# ----------------------------------------------------
-# 2. DATA GENERATION & CACHING
-# ----------------------------------------------------
 @st.cache_data
 def generate_data():
     np.random.seed(42)
@@ -55,9 +47,6 @@ def generate_data():
 
 df = generate_data()
 
-# ----------------------------------------------------
-# 3. HEADER & SUMMARY METRICS
-# ----------------------------------------------------
 st.title("📊 Credit Risk & Multi-Factor Fraud Analytics Platform")
 st.caption("Integrated Analytics Dashboard for Loan Assessment & Automated Fraud Detection Engine")
 
@@ -65,7 +54,6 @@ st.markdown("""
 Platform analitik keputusan berbasis dua modul utama: **Loan Risk Analytics** (kelayakan kredit dan risiko gagal bayar) serta **Fraud Monitoring** dengan **Skor Anomali Otomatis** yang mengkalkulasi tingkat risiko berdasarkan gabungan frekuensi transaksi, waktu (jam malam), nominal, dan rasio profil finansial.
 """)
 
-# Executive Metrics Summary
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Total Observasi", f"{len(df):,}".replace(",", "."))
 m2.metric("Rata-Rata Transaksi", format_rupiah(df['Transaction_Amount'].mean()))
@@ -75,9 +63,6 @@ m5.metric("Best AI Model AUC", "0.98", "Fraud & Loan")
 
 st.markdown("---")
 
-# ----------------------------------------------------
-# 4. MODULE 1: LOAN DEFAULT ANALYTICS
-# ----------------------------------------------------
 st.subheader("💳 1. Loan Default Risk Analytics")
 st.caption("Fokus: Kapasitas finansial nasabah, rasio pendapatan terhadap pinjaman, dan estimasi kelayakan kredit.")
 
@@ -103,9 +88,6 @@ with col_l2:
 
 st.markdown("---")
 
-# ----------------------------------------------------
-# 5. MODULE 2: FRAUD MONITORING ANALYTICS
-# ----------------------------------------------------
 st.subheader("🛡️ 2. Multi-Factor Fraud Monitoring Analytics")
 st.caption("Fokus: Deteksi transaksi abnormal berdasarkan frekuensi harian, waktu transaksi (jam malam), dan pola nominal.")
 
@@ -131,9 +113,6 @@ with col_f2:
 
 st.markdown("---")
 
-# ----------------------------------------------------
-# 6. DATA EXPLORER & MODEL EVALUATION
-# ----------------------------------------------------
 st.subheader("🗃️ Data Profiling & Model Performance")
 
 tab_data, tab_model = st.tabs(["📄 Sample Dataset & Ringkasan Statistik", "⚙️ Metrik Evaluasi Model AI"])
@@ -167,9 +146,6 @@ with tab_model:
 
 st.markdown("---")
 
-# ----------------------------------------------------
-# 7. AUTOMATED REAL-TIME SIMULATOR
-# ----------------------------------------------------
 st.subheader("🎮 Live Automated Decision Simulator (Loan & Fraud)")
 st.caption("Masukkan parameter transaksi di bawah. Sistem AI akan **menghitung Skor Anomali Perilaku secara otomatis** tanpa input manual.")
 
@@ -195,32 +171,24 @@ with st.form("prediction_form"):
         
     submit = st.form_submit_button("🚀 Evaluasi Keputusan dengan Algoritma Otomatis", use_container_width=True)
 
-# Processing Results
 if submit:
     safe_income = max(input_income, 1) if input_income > 0 else 1
     
-    # --- ALGORITMA SKOR ANOMALI OTOMATIS (AUTOMATED ANOMALY ENGINE) ---
     is_night = 1 if (input_hour >= 23 or input_hour <= 4) else 0
     
-    # 1. Anomali Waktu (Malam hari: +0.35)
     time_anomaly = 0.35 if is_night else 0.05
     
-    # 2. Anomali Frekuensi (>8x transaksi/hari: bertahap naik hingga +0.35)
     freq_anomaly = min(max((input_freq - 3) * 0.05, 0.0), 0.35)
     
-    # 3. Anomali Lonjakan Nominal dibanding Pendapatan Bulanan (Est: Income/12)
     monthly_income = safe_income / 12
     tx_ratio = input_tx / monthly_income
     tx_anomaly = min(max((tx_ratio - 0.2) * 0.4, 0.0), 0.30)
     
-    # Total Skor Anomali Otomatis (Skala 0.0 - 1.0)
     auto_anomaly_score = min(max(time_anomaly + freq_anomaly + tx_anomaly, 0.05), 0.99)
     
-    # --- EVALUASI LOAN & FRAUD RISK ---
     loan_risk = min(max((input_tx / safe_income) * 1.8 + (auto_anomaly_score * 0.2), 0.05), 0.98)
     fraud_risk = auto_anomaly_score
 
-    # Output Metric Banner untuk Skor Anomali Terkalkulasi
     st.markdown("### 📋 Hasil Evaluasi Keputusan AI")
     st.info(f"🤖 **Skor Anomali Perilaku Terkalkulasi Otomatis:** `{auto_anomaly_score:.2f}` / 1.00 (Dihitung berdasarkan indikator Waktu, Frekuensi, dan Rasio Nominal)")
 
@@ -280,6 +248,5 @@ if submit:
         else:
             st.info("🛡️ **PEMERIKSAAN: TRANSAKSI NORMAL**\n\nSeluruh indikator transaksi berada dalam ambang batas wajar.")
 
-# Footer
 st.markdown("---")
 st.caption("Credit Risk & Fraud Analytics Decision Platform — Executive Dashboard")
