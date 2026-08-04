@@ -5,74 +5,114 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 
-# 1. Konfigurasi Halaman (Sidebar disembunyikan secara default)
+# 1. Konfigurasi Halaman
 st.set_page_config(
     page_title="BankGuard AI Platform",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="collapsed" # Menyembunyikan sidebar
+    initial_sidebar_state="collapsed"
 )
 
-# 2. Custom CSS untuk Header & Navbar bergaya Website Modern
+# 2. Custom CSS (Adaptif Dark & Light Mode + Header Premium)
 st.markdown("""
 <style>
-    /* Hilangkan margin atas Streamlit */
+    /* Hilangkan padding berlebih di bagian atas */
     .block-container {
-        padding-top: 1.5rem;
+        padding-top: 1.2rem;
         padding-bottom: 2rem;
     }
     
-    /* Styling Header Top Bar */
-    .header-container {
+    /* Header Top Banner Modern dengan Gradient & Glow Effect */
+    .hero-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 22px 30px;
+        border-radius: 16px;
+        color: #ffffff;
+        margin-bottom: 25px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
-        padding: 18px 25px;
-        border-radius: 12px;
-        color: white;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    .header-title {
-        font-size: 26px;
-        font-weight: 700;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .header-subtitle {
-        font-size: 13px;
-        color: #94a3b8;
-        margin-top: 2px;
     }
     
-    /* Styling Radio Button Horizontal agar terlihat seperti Navbar Tabs */
-    div[data-testid="stHorizontalBlock"] > div {
-        background-color: transparent;
+    .hero-title-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
+    
+    .hero-icon {
+        font-size: 38px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .hero-title {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.5px;
+        background: linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .hero-subtitle {
+        font-size: 13px;
+        color: #94a3b8;
+        margin-top: 3px;
+        font-weight: 400;
+    }
+    
+    .status-badge {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #34d399;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #34d399;
+    }
+
+    /* FIX DARK MODE NAVBAR: Menggunakan CSS dinamis bawaan Streamlit */
     div[role="radiogroup"] {
         display: flex;
-        justify-content: flex-start;
-        gap: 10px;
-        background-color: #f1f5f9;
-        padding: 6px;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
+        gap: 12px;
+        background-color: rgba(125, 125, 125, 0.1) !important;
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid rgba(125, 125, 125, 0.2);
     }
+    
     div[role="radiogroup"] label {
         background-color: transparent !important;
-        border: none !important;
-        padding: 8px 18px !important;
+        border: 1px solid transparent !important;
+        padding: 8px 20px !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        color: #475569 !important;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease-in-out;
     }
+    
+    /* Warna teks adaptif saat hover & terpilih */
     div[role="radiogroup"] label:hover {
-        color: #0f172a !important;
-        background-color: #e2e8f0 !important;
+        border-color: rgba(99, 102, 241, 0.4) !important;
+        background-color: rgba(99, 102, 241, 0.1) !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -126,29 +166,33 @@ def create_gauge_chart(score, title):
             'axis': {'range': [0, 100]},
             'bar': {'color': color},
             'steps': [
-                {'range': [0, 30], 'color': "#e8f5e9"},
-                {'range': [30, 70], 'color': "#fff3e0"},
-                {'range': [70, 100], 'color': "#ffebee"}
+                {'range': [0, 30], 'color': "rgba(76, 175, 80, 0.2)"},
+                {'range': [30, 70], 'color': "rgba(255, 152, 0, 0.2)"},
+                {'range': [70, 100], 'color': "rgba(244, 67, 54, 0.2)"}
             ],
         }
     ))
-    fig.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20))
+    fig.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
-# ---------------- 3. HEADER NAVBAR WEBSITE ----------------
+# ---------------- HERO HEADER (JUDUL modern & ELEGAN) ----------------
 st.markdown("""
-<div class="header-container">
-    <div>
-        <div class="header-title">🛡️ BankGuard AI</div>
-        <div class="header-subtitle">Real-Time Financial Risk Intelligence Platform</div>
+<div class="hero-header">
+    <div class="hero-title-group">
+        <div class="hero-icon">🛡️</div>
+        <div>
+            <h1 class="hero-title">BankGuard AI</h1>
+            <div class="hero-subtitle">Enterprise Risk & Fraud Intelligence Platform</div>
+        </div>
     </div>
-    <div style="text-align: right; font-size: 12px; color: #38bdf8;">
-        ● System Operational
+    <div class="status-badge">
+        <div class="status-dot"></div>
+        SYSTEM OPERATIONAL
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ---------------- 4. NAVIGASI ATAS (TOP NAVBAR TABS) ----------------
+# ---------------- NAVIGASI NAVBAR ----------------
 menu = st.radio(
     label="Pilih Modul Aplikasi:",
     options=["🏠 Dashboard Utama", "🚨 Fraud Detection Simulator", "💳 Loan Default Risk Predictor"],
@@ -160,8 +204,8 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # ---------------- 1. DASHBOARD UTAMA ----------------
 if menu == "🏠 Dashboard Utama":
-    st.subheader("🛡️ Executive Overview")
-    st.caption("Platform Analisis Portofolio Risiko Keuangan Berbasis AI")
+    st.subheader("📊 Executive Overview")
+    st.caption("Platform Monitoring Portofolio & Sistem Deteksi Anomali AI")
     
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Status Sistem", "Aktif 🟢")
@@ -462,5 +506,5 @@ elif menu == "💳 Loan Default Risk Predictor":
                     textposition='auto',
                     marker_color=['#ef5350', '#26a69a', '#42a5f5']
                 ))
-                fig_bar.update_layout(height=230, margin=dict(l=20, r=20, t=20, b=20))
+                fig_bar.update_layout(height=230, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_bar, use_container_width=True)
