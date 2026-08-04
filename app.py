@@ -5,21 +5,74 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 
+# 1. Konfigurasi Halaman (Sidebar disembunyikan secara default)
 st.set_page_config(
     page_title="BankGuard AI Platform",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed" # Menyembunyikan sidebar
 )
 
-# Custom CSS
+# 2. Custom CSS untuk Header & Navbar bergaya Website Modern
 st.markdown("""
 <style>
-    .stCard {
-        background-color: #f8f9fa;
+    /* Hilangkan margin atas Streamlit */
+    .block-container {
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+    }
+    
+    /* Styling Header Top Bar */
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+        padding: 18px 25px;
+        border-radius: 12px;
+        color: white;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .header-title {
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .header-subtitle {
+        font-size: 13px;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    
+    /* Styling Radio Button Horizontal agar terlihat seperti Navbar Tabs */
+    div[data-testid="stHorizontalBlock"] > div {
+        background-color: transparent;
+    }
+    div[role="radiogroup"] {
+        display: flex;
+        justify-content: flex-start;
+        gap: 10px;
+        background-color: #f1f5f9;
+        padding: 6px;
         border-radius: 10px;
-        padding: 15px;
-        border: 1px solid #e9ecef;
+        border: 1px solid #e2e8f0;
+    }
+    div[role="radiogroup"] label {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 8px 18px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        transition: all 0.3s ease;
+    }
+    div[role="radiogroup"] label:hover {
+        color: #0f172a !important;
+        background-color: #e2e8f0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -82,19 +135,32 @@ def create_gauge_chart(score, title):
     fig.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20))
     return fig
 
-# Sidebar
-st.sidebar.title("🛡️ BankGuard AI")
-st.sidebar.caption("Real-Time Financial Risk Intelligence Platform")
-st.sidebar.markdown("---")
+# ---------------- 3. HEADER NAVBAR WEBSITE ----------------
+st.markdown("""
+<div class="header-container">
+    <div>
+        <div class="header-title">🛡️ BankGuard AI</div>
+        <div class="header-subtitle">Real-Time Financial Risk Intelligence Platform</div>
+    </div>
+    <div style="text-align: right; font-size: 12px; color: #38bdf8;">
+        ● System Operational
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-menu = st.sidebar.radio(
-    "Navigasi Modul:",
-    ["Dashboard Utama", "🚨 Fraud Detection Simulator", "💳 Loan Default Risk Predictor"]
+# ---------------- 4. NAVIGASI ATAS (TOP NAVBAR TABS) ----------------
+menu = st.radio(
+    label="Pilih Modul Aplikasi:",
+    options=["🏠 Dashboard Utama", "🚨 Fraud Detection Simulator", "💳 Loan Default Risk Predictor"],
+    horizontal=True,
+    label_visibility="collapsed"
 )
 
+st.markdown("<br>", unsafe_allow_html=True)
+
 # ---------------- 1. DASHBOARD UTAMA ----------------
-if menu == "Dashboard Utama":
-    st.title("🛡️ Executive Overview")
+if menu == "🏠 Dashboard Utama":
+    st.subheader("🛡️ Executive Overview")
     st.caption("Platform Analisis Portofolio Risiko Keuangan Berbasis AI")
     
     m1, m2, m3, m4 = st.columns(4)
@@ -124,7 +190,7 @@ if menu == "Dashboard Utama":
 
 # ---------------- 2. FRAUD DETECTION SIMULATOR ----------------
 elif menu == "🚨 Fraud Detection Simulator":
-    st.title("🚨 Fraud Detection Simulator")
+    st.subheader("🚨 Fraud Detection Simulator")
     st.caption("Simulasikan data transaksi kartu untuk analisis potensi fraud secara real-time.")
 
     if "fraud_model" not in artifacts:
@@ -133,7 +199,6 @@ elif menu == "🚨 Fraud Detection Simulator":
         model = artifacts["fraud_model"]
         features = artifacts["fraud_features"]
 
-        # Inisialisasi session state
         if "f_amount" not in st.session_state:
             st.session_state.f_amount = 150000.0
             st.session_state.f_cust_tx = 80
@@ -145,7 +210,6 @@ elif menu == "🚨 Fraud Detection Simulator":
             st.session_state.f_night = 0
             st.session_state.f_acc = "Savings"
 
-        # Setter preset
         if st.session_state.get("set_preset_flag") == "normal":
             st.session_state.f_amount = 150000.0
             st.session_state.f_cust_tx = 80
@@ -182,7 +246,7 @@ elif menu == "🚨 Fraud Detection Simulator":
             st.session_state.f_acc = "Checking"
             st.session_state.set_preset_flag = None
 
-        st.subheader("💡 Skenario Cepat:")
+        st.markdown("**💡 Skenario Cepat:**")
         sc1, sc2, sc3 = st.columns(3)
         
         if sc1.button("🟢 Transaksi Normal (Disetujui)", use_container_width=True):
@@ -220,14 +284,12 @@ elif menu == "🚨 Fraud Detection Simulator":
             submit = st.form_submit_button("🔍 Jalankan Analisis Risiko", use_container_width=True)
 
         if submit:
-            # 1. Scaling Nominal Rupiah ke Dolar (Asumsi model dilatih dengan skala USD ~ Rp 15.000)
             amount_scaled = amount / 15000.0
             avg_tx_scaled = avg_tx_amount / 15000.0
 
             input_df = pd.DataFrame(0.0, index=[0], columns=features)
             account_map = {"Savings": 0, "Checking": 1, "Premium": 2}
 
-            # Map fitur dengan menyuplai angka ter-skala dan mentah
             mapping_dict = {
                 "amount": amount_scaled, "transaction_amount": amount_scaled, "txn_amount": amount_scaled,
                 "amount_raw": amount, "customer_tx_count": customer_tx_count, "tx_count": customer_tx_count,
@@ -244,7 +306,6 @@ elif menu == "🚨 Fraud Detection Simulator":
                 if col in mapping_dict:
                     input_df[col] = float(mapping_dict[col])
 
-            # Prediksi awal dari model ML
             prob = 0.0
             try:
                 if hasattr(model, "predict_proba"):
@@ -261,7 +322,6 @@ elif menu == "🚨 Fraud Detection Simulator":
                 except Exception:
                     prob = 0.0
 
-            # Fallback Rule Engine: Jika model output 0% padahal input berisiko tinggi (Merchant Risk > 0.4 atau Night + High Amount)
             rule_score = (
                 (merchant_fraud_rate * 0.4) +
                 (branch_fraud_rate * 0.3) +
@@ -269,9 +329,8 @@ elif menu == "🚨 Fraud Detection Simulator":
                 (0.15 if (amount / max(avg_tx_amount, 1.0)) > 5.0 else 0.0)
             )
             
-            # Ambil nilai skor risiko tertinggi antara model ML & Rule-engine
             prob = max(prob, rule_score)
-            prob = min(max(prob, 0.0), 0.99) # Limit 0 - 99%
+            prob = min(max(prob, 0.0), 0.99)
 
             st.markdown("---")
             st.subheader("Hasil Keputusan Transaksi:")
@@ -288,9 +347,9 @@ elif menu == "🚨 Fraud Detection Simulator":
                     st.warning(f"""
                     **Transaksi Senilai {format_rp(amount)} Gagal Diinisiasi!**
                     * **Indikasi**: Terdeteksi kecurangan/anomali tinggi (Probabilitas: **{prob:.1%}**).
-                    * **Faktor Utama**: Risk Merchant ({merchant_fraud_rate:.0%}) & Lonjakan Nominal Transaksi.
                     * **Tindakan Otomatis**: Transaksi dibatalkan secara permanen demi keamanan rekening.
                     """)
+                    st.toast("⚠️ Transaksi Berbahaya Diblokir Otomatis!", icon="⛔")
                 elif prob >= 0.30:
                     st.warning("⚠️ **STATUS: DITAHAN / BUTUH VERIFIKASI (OTP)**")
                     st.metric(label="Keputusan Sistem", value="CHALLENGE", delta="MEDIUM RISK", delta_color="off")
@@ -306,10 +365,11 @@ elif menu == "🚨 Fraud Detection Simulator":
                     **Transaksi Senilai {format_rp(amount)} Berhasil!**
                     * Transaksi aman dan diproses ke core banking.
                     """)
+                    st.balloons()
 
 # ---------------- 3. LOAN DEFAULT RISK PREDICTOR ----------------
 elif menu == "💳 Loan Default Risk Predictor":
-    st.title("💳 Loan Default Risk Predictor")
+    st.subheader("💳 Loan Default Risk Predictor")
     st.caption("Evaluasi profil pemohon kredit pinjaman dan risiko gagal bayar (default).")
 
     if "loan_model" not in artifacts:
@@ -375,7 +435,6 @@ elif menu == "💳 Loan Default Risk Predictor":
                 else:
                     prob = float(model.predict(X_vals)[0])
 
-            # Fallback Credit Risk Engine jika DTI terlalu tinggi atau banyak terlambat bayar
             credit_rule_score = (dti * 0.4) + (num_missed_payments * 0.15)
             prob = max(prob, credit_rule_score)
             prob = min(max(prob, 0.0), 0.99)
