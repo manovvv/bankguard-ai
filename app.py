@@ -145,6 +145,34 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+st.markdown("""
+<style>
+.stApp{
+background:linear-gradient(180deg,#0b1220,#111827);
+}
+div[data-testid="stMetric"]{
+background:#172033;
+padding:14px;
+border-radius:14px;
+border:1px solid rgba(255,255,255,.08);
+box-shadow:0 4px 16px rgba(0,0,0,.18);
+}
+.stButton>button{
+border-radius:12px;
+font-weight:700;
+height:3em;
+}
+div[data-testid="stForm"]{
+border:1px solid rgba(255,255,255,.08);
+border-radius:16px;
+padding:16px;
+background:rgba(255,255,255,.02);
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 BASE_DIR = Path(__file__).resolve().parent if "__file__" in locals() else Path(".")
 
 def find_file(filename):
