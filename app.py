@@ -13,46 +13,49 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. Custom CSS (Adaptif Dark & Light Mode + Header Premium)
+# 2. Custom CSS Adaptive Responsive (Support Mobile HP & Desktop)
 st.markdown("""
 <style>
-    /* Hilangkan padding berlebih di bagian atas */
+    /* Reset Padding Kontainer Utama */
     .block-container {
-        padding-top: 1.2rem;
+        padding-top: 1rem;
         padding-bottom: 2rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
     
-    /* Header Top Banner Modern dengan Gradient & Glow Effect */
+    /* Header Base Styling */
     .hero-header {
         background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 22px 30px;
-        border-radius: 16px;
+        padding: 16px 20px;
+        border-radius: 14px;
         color: #ffffff;
-        margin-bottom: 25px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        margin-bottom: 15px;
+        box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
     }
     
     .hero-title-group {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
     }
     
     .hero-icon {
-        font-size: 38px;
+        font-size: 28px;
         background: rgba(255, 255, 255, 0.1);
-        padding: 10px;
-        border-radius: 12px;
+        padding: 8px;
+        border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
     }
     
     .hero-title {
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 800;
         margin: 0;
         letter-spacing: -0.5px;
@@ -62,57 +65,82 @@ st.markdown("""
     }
     
     .hero-subtitle {
-        font-size: 13px;
+        font-size: 12px;
         color: #94a3b8;
-        margin-top: 3px;
-        font-weight: 400;
+        margin-top: 2px;
     }
     
     .status-badge {
         background: rgba(16, 185, 129, 0.15);
         color: #34d399;
         border: 1px solid rgba(16, 185, 129, 0.3);
-        padding: 6px 14px;
+        padding: 4px 10px;
         border-radius: 20px;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
-        letter-spacing: 0.5px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
     
     .status-dot {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
         background-color: #34d399;
         border-radius: 50%;
-        box-shadow: 0 0 8px #34d399;
+        box-shadow: 0 0 6px #34d399;
     }
 
-    /* FIX DARK MODE NAVBAR: Menggunakan CSS dinamis bawaan Streamlit */
+    /* NAVIGASI RADIO BUTTON RESPONSIVE */
     div[role="radiogroup"] {
-        display: flex;
-        gap: 12px;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important; /* Membuat menu bisa di-swipe di HP */
+        -webkit-overflow-scrolling: touch;
+        gap: 8px !important;
         background-color: rgba(125, 125, 125, 0.1) !important;
-        padding: 8px;
-        border-radius: 12px;
-        border: 1px solid rgba(125, 125, 125, 0.2);
+        padding: 6px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(125, 125, 125, 0.2) !important;
+        scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
+    }
+    
+    /* Sembunyikan scrollbar di Chrome/Safari */
+    div[role="radiogroup"]::-webkit-scrollbar {
+        display: none;
     }
     
     div[role="radiogroup"] label {
+        white-space: nowrap !important; /* Biar teks tidak patah ke bawah */
+        flex: 0 0 auto !important;
         background-color: transparent !important;
-        border: 1px solid transparent !important;
-        padding: 8px 20px !important;
+        padding: 6px 14px !important;
         border-radius: 8px !important;
+        font-size: 13px !important;
         font-weight: 600 !important;
-        transition: all 0.2s ease-in-out;
     }
     
-    /* Warna teks adaptif saat hover & terpilih */
-    div[role="radiogroup"] label:hover {
-        border-color: rgba(99, 102, 241, 0.4) !important;
-        background-color: rgba(99, 102, 241, 0.1) !important;
+    /* OPTIMASI TAMPILAN HP (< 768px) */
+    @media (max-width: 768px) {
+        .hero-header {
+            padding: 12px 15px;
+            border-radius: 10px;
+        }
+        .hero-title {
+            font-size: 18px;
+        }
+        .hero-subtitle {
+            font-size: 11px;
+        }
+        .hero-icon {
+            font-size: 22px;
+            padding: 6px;
+        }
+        .status-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -161,7 +189,7 @@ def create_gauge_chart(score, title):
         mode="gauge+number",
         value=score * 100,
         number={'suffix': "%"},
-        title={'text': title, 'font': {'size': 18}},
+        title={'text': title, 'font': {'size': 16}},
         gauge={
             'axis': {'range': [0, 100]},
             'bar': {'color': color},
@@ -172,30 +200,30 @@ def create_gauge_chart(score, title):
             ],
         }
     ))
-    fig.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(height=220, margin=dict(l=15, r=15, t=35, b=15), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
     return fig
 
-# ---------------- HERO HEADER (JUDUL modern & ELEGAN) ----------------
+# ---------------- HERO HEADER (RESPONSIVE) ----------------
 st.markdown("""
 <div class="hero-header">
     <div class="hero-title-group">
         <div class="hero-icon">🛡️</div>
         <div>
             <h1 class="hero-title">BankGuard AI</h1>
-            <div class="hero-subtitle">Enterprise Risk & Fraud Intelligence Platform</div>
+            <div class="hero-subtitle">Risk Intelligence Platform</div>
         </div>
     </div>
     <div class="status-badge">
         <div class="status-dot"></div>
-        SYSTEM OPERATIONAL
+        OPERATIONAL
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ---------------- NAVIGASI NAVBAR ----------------
+# ---------------- NAVIGASI NAVBAR (SWIPEABLE MOBILE) ----------------
 menu = st.radio(
     label="Pilih Modul Aplikasi:",
-    options=["🏠 Dashboard Utama", "🚨 Fraud Detection Simulator", "💳 Loan Default Risk Predictor"],
+    options=["🏠 Dashboard", "🚨 Fraud Simulator", "💳 Credit Risk"],
     horizontal=True,
     label_visibility="collapsed"
 )
@@ -203,15 +231,15 @@ menu = st.radio(
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ---------------- 1. DASHBOARD UTAMA ----------------
-if menu == "🏠 Dashboard Utama":
+if menu == "🏠 Dashboard":
     st.subheader("📊 Executive Overview")
     st.caption("Platform Monitoring Portofolio & Sistem Deteksi Anomali AI")
     
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Status Sistem", "Aktif 🟢")
-    m2.metric("Akurasi Model Fraud", "98.4%", "+0.2%")
-    m3.metric("Akurasi Model Kredit", "94.1%", "+0.5%")
-    m4.metric("Avg Latency Predict", "12 ms", "-2 ms")
+    m2.metric("Akurasi Fraud", "98.4%", "+0.2%")
+    m3.metric("Akurasi Kredit", "94.1%", "+0.5%")
+    m4.metric("Avg Latency", "12 ms", "-2 ms")
     
     st.markdown("---")
     
@@ -233,7 +261,7 @@ if menu == "🏠 Dashboard Utama":
             st.error("Status: **Not Found** ❌")
 
 # ---------------- 2. FRAUD DETECTION SIMULATOR ----------------
-elif menu == "🚨 Fraud Detection Simulator":
+elif menu == "🚨 Fraud Simulator":
     st.subheader("🚨 Fraud Detection Simulator")
     st.caption("Simulasikan data transaksi kartu untuk analisis potensi fraud secara real-time.")
 
@@ -293,25 +321,25 @@ elif menu == "🚨 Fraud Detection Simulator":
         st.markdown("**💡 Skenario Cepat:**")
         sc1, sc2, sc3 = st.columns(3)
         
-        if sc1.button("🟢 Transaksi Normal (Disetujui)", use_container_width=True):
+        if sc1.button("🟢 Normal", use_container_width=True):
             st.session_state.set_preset_flag = "normal"
             st.rerun()
-        if sc2.button("🟡 Transaksi Mencurigakan (OTP)", use_container_width=True):
+        if sc2.button("🟡 Mencurigakan", use_container_width=True):
             st.session_state.set_preset_flag = "medium"
             st.rerun()
-        if sc3.button("🔴 Transaksi Berbahaya (Ditolak)", use_container_width=True):
+        if sc3.button("🔴 Bahaya", use_container_width=True):
             st.session_state.set_preset_flag = "high"
             st.rerun()
 
         with st.form("fraud_form"):
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns([1, 1, 1])
             with col1:
                 amount = st.number_input("Jumlah Transaksi (Rp)", min_value=1000.0, value=float(st.session_state.f_amount), step=50000.0, format="%.0f")
                 st.caption(f"Terbaca: **{format_rp(amount)}**")
                 
-                customer_tx_count = st.number_input("Total Riwayat Transaksi Nasabah", min_value=1, value=int(st.session_state.f_cust_tx))
+                customer_tx_count = st.number_input("Total Riwayat Transaksi", min_value=1, value=int(st.session_state.f_cust_tx))
                 
-                avg_tx_amount = st.number_input("Rata-rata Nominal Transaksi (Rp)", min_value=1000.0, value=float(st.session_state.f_avg_tx), step=50000.0, format="%.0f")
+                avg_tx_amount = st.number_input("Rata-rata Nominal (Rp)", min_value=1000.0, value=float(st.session_state.f_avg_tx), step=50000.0, format="%.0f")
                 st.caption(f"Terbaca: **{format_rp(avg_tx_amount)}**")
 
             with col2:
@@ -320,8 +348,8 @@ elif menu == "🚨 Fraud Detection Simulator":
                 transaction_frequency = st.number_input("Frekuensi Transaksi/Hari", min_value=0.1, value=float(st.session_state.f_freq))
 
             with col3:
-                weekend_indicator = st.selectbox("Transaksi Akhir Pekan?", [0, 1], index=int(st.session_state.f_wnd), format_func=lambda x: "Ya" if x == 1 else "Tidak")
-                night_indicator = st.selectbox("Transaksi Malam Hari (00.00-06.00)?", [0, 1], index=int(st.session_state.f_night), format_func=lambda x: "Ya" if x == 1 else "Tidak")
+                weekend_indicator = st.selectbox("Akhir Pekan?", [0, 1], index=int(st.session_state.f_wnd), format_func=lambda x: "Ya" if x == 1 else "Tidak")
+                night_indicator = st.selectbox("Malam Hari (00-06)?", [0, 1], index=int(st.session_state.f_night), format_func=lambda x: "Ya" if x == 1 else "Tidak")
                 acc_idx = ["Savings", "Checking", "Premium"].index(st.session_state.f_acc)
                 account_type = st.selectbox("Tipe Akun", ["Savings", "Checking", "Premium"], index=acc_idx)
 
@@ -412,7 +440,7 @@ elif menu == "🚨 Fraud Detection Simulator":
                     st.balloons()
 
 # ---------------- 3. LOAN DEFAULT RISK PREDICTOR ----------------
-elif menu == "💳 Loan Default Risk Predictor":
+elif menu == "💳 Credit Risk":
     st.subheader("💳 Loan Default Risk Predictor")
     st.caption("Evaluasi profil pemohon kredit pinjaman dan risiko gagal bayar (default).")
 
@@ -423,7 +451,7 @@ elif menu == "💳 Loan Default Risk Predictor":
         features = artifacts["loan_features"]
 
         with st.form("loan_form"):
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns([1, 1, 1])
             with col1:
                 loan_amount = st.number_input("Pengajuan Pinjaman (Rp)", min_value=1000000.0, value=50000000.0, step=1000000.0, format="%.0f")
                 st.caption(f"Terbaca: **{format_rp(loan_amount)}**")
@@ -434,7 +462,7 @@ elif menu == "💳 Loan Default Risk Predictor":
                 loan_duration = st.number_input("Tenor Pinjaman (Bulan)", min_value=6, value=36)
 
             with col2:
-                num_missed_payments = st.number_input("Jumlah Terlambat Bayar Sebelumnya", min_value=0, value=0)
+                num_missed_payments = st.number_input("Jumlah Terlambat Bayar", min_value=0, value=0)
                 
                 account_balance = st.number_input("Saldo Tabungan Saat Ini (Rp)", min_value=0.0, value=15000000.0, step=1000000.0, format="%.0f")
                 st.caption(f"Terbaca: **{format_rp(account_balance)}**")
@@ -485,13 +513,13 @@ elif menu == "💳 Loan Default Risk Predictor":
 
             st.markdown("---")
             c1, c2, c3 = st.columns(3)
-            c1.metric("Rasio DTI (Debt-to-Income)", f"{dti:.2%}")
+            c1.metric("Rasio DTI", f"{dti:.2%}")
             c2.metric("Probabilitas Gagal Bayar", f"{prob:.2%}")
             
             if prob >= 0.50:
-                c3.metric("Rekomendasi Pinjaman", "DITOLAK ❌", delta="-HIGH RISK", delta_color="inverse")
+                c3.metric("Rekomendasi", "DITOLAK ❌", delta="-HIGH RISK", delta_color="inverse")
             else:
-                c3.metric("Rekomendasi Pinjaman", "DISETUJUI ✅", delta="LOW RISK")
+                c3.metric("Rekomendasi", "DISETUJUI ✅", delta="LOW RISK")
 
             res_col1, res_col2 = st.columns([1, 1])
             with res_col1:
@@ -506,5 +534,5 @@ elif menu == "💳 Loan Default Risk Predictor":
                     textposition='auto',
                     marker_color=['#ef5350', '#26a69a', '#42a5f5']
                 ))
-                fig_bar.update_layout(height=230, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                fig_bar.update_layout(height=220, margin=dict(l=15, r=15, t=15, b=15), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig_bar, use_container_width=True)
