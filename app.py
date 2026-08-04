@@ -1,16 +1,9 @@
-"""
-BankGuardAI - Interactive Dashboard & Inference Application
-=============================================================
-Streamlit application for Fraud Detection & Loan Risk Assessment.
-"""
-
 import pickle
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-# Configure Page Layout
 st.set_page_config(
     page_title="BankGuard AI Platform",
     page_icon="🛡️",
@@ -18,12 +11,11 @@ st.set_page_config(
 )
 
 BASE_DIR = Path(__file__).resolve().parent if "__file__" in locals() else Path(".")
-MODELS_DIR = BASE_DIR / "models"
+MODELS_DIR = BASE_DIR
 
 
 @st.cache_resource
 def load_artifacts():
-    """Load cached model artifacts."""
     artifacts = {}
     
     fraud_model_path = MODELS_DIR / "fraud_model.pkl"
@@ -48,9 +40,6 @@ def load_artifacts():
 
 artifacts = load_artifacts()
 
-# ----------------------------------------------------------------------
-# Sidebar Navigation
-# ----------------------------------------------------------------------
 st.sidebar.title("🛡️ BankGuard AI")
 st.sidebar.caption("Real-Time Financial Risk Intelligence")
 
@@ -59,9 +48,6 @@ menu = st.sidebar.radio(
     ["Overview", "🚨 Fraud Detection Simulator", "💳 Loan Default Risk Predictor"]
 )
 
-# ----------------------------------------------------------------------
-# 1. Overview Page
-# ----------------------------------------------------------------------
 if menu == "Overview":
     st.title("🛡️ Welcome to BankGuard AI Platform")
     st.markdown("""
@@ -76,9 +62,6 @@ if menu == "Overview":
     with col2:
         st.success("### 💳 Loan Risk Model Status\n" + ("Ready ✅" if "loan_model" in artifacts else "Not Found ❌"))
 
-# ----------------------------------------------------------------------
-# 2. Fraud Detection Simulator
-# ----------------------------------------------------------------------
 elif menu == "🚨 Fraud Detection Simulator":
     st.title("🚨 Fraud Detection Simulator")
     st.markdown("Masukkan rincian transaksi kartu untuk memprediksi potensi *fraud* secara real-time.")
@@ -110,10 +93,8 @@ elif menu == "🚨 Fraud Detection Simulator":
             submit = st.form_submit_button("🔍 Prediksi Fraud")
 
         if submit:
-            # Construct input vector based on model training schema
             input_data = pd.DataFrame(0, index=[0], columns=features)
             
-            # Map input values
             val_map = {
                 "amount": amount,
                 "customer_tx_count": customer_tx_count,
@@ -132,7 +113,6 @@ elif menu == "🚨 Fraud Detection Simulator":
             if "account_type" in input_data.columns:
                 input_data["account_type"] = input_data["account_type"].astype("category")
 
-            # Prediction
             pred = model.predict(input_data)[0]
             prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
 
@@ -149,9 +129,6 @@ elif menu == "🚨 Fraud Detection Simulator":
             with res_col2:
                 st.metric("Skor Probabilitas Risiko Fraud", f"{prob:.4f}")
 
-# ----------------------------------------------------------------------
-# 3. Loan Default Risk Predictor
-# ----------------------------------------------------------------------
 elif menu == "💳 Loan Default Risk Predictor":
     st.title("💳 Loan Default Risk Predictor")
     st.markdown("Evaluasi profil nasabah untuk memprediksi potensi gagal bayar pinjaman (*Credit Default*).")
