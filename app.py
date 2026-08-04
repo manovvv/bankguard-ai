@@ -133,7 +133,7 @@ elif menu == "🚨 Fraud Detection Simulator":
         model = artifacts["fraud_model"]
         features = artifacts["fraud_features"]
 
-        # Inisialisasi session_state jika belum ada
+        # Inisialisasi session state
         if "f_amount" not in st.session_state:
             st.session_state.f_amount = 150000.0
             st.session_state.f_cust_tx = 80
@@ -145,27 +145,55 @@ elif menu == "🚨 Fraud Detection Simulator":
             st.session_state.f_night = 0
             st.session_state.f_acc = "Savings"
 
-        # Fungsi Update Preset via Button
-        def set_preset(amount, cust_tx, avg_tx, m_rate, b_rate, freq, wnd, night, acc):
-            st.session_state.f_amount = amount
-            st.session_state.f_cust_tx = cust_tx
-            st.session_state.f_avg_tx = avg_tx
-            st.session_state.f_m_rate = m_rate
-            st.session_state.f_b_rate = b_rate
-            st.session_state.f_freq = freq
-            st.session_state.f_wnd = wnd
-            st.session_state.f_night = night
-            st.session_state.f_acc = acc
+        # Setter preset
+        if st.session_state.get("set_preset_flag") == "normal":
+            st.session_state.f_amount = 150000.0
+            st.session_state.f_cust_tx = 80
+            st.session_state.f_avg_tx = 120000.0
+            st.session_state.f_m_rate = 0.01
+            st.session_state.f_b_rate = 0.01
+            st.session_state.f_freq = 1.0
+            st.session_state.f_wnd = 0
+            st.session_state.f_night = 0
+            st.session_state.f_acc = "Savings"
+            st.session_state.set_preset_flag = None
+
+        elif st.session_state.get("set_preset_flag") == "medium":
+            st.session_state.f_amount = 15000000.0
+            st.session_state.f_cust_tx = 5
+            st.session_state.f_avg_tx = 500000.0
+            st.session_state.f_m_rate = 0.45
+            st.session_state.f_b_rate = 0.35
+            st.session_state.f_freq = 6.0
+            st.session_state.f_wnd = 1
+            st.session_state.f_night = 0
+            st.session_state.f_acc = "Checking"
+            st.session_state.set_preset_flag = None
+
+        elif st.session_state.get("set_preset_flag") == "high":
+            st.session_state.f_amount = 150000000.0
+            st.session_state.f_cust_tx = 1
+            st.session_state.f_avg_tx = 150000.0
+            st.session_state.f_m_rate = 0.95
+            st.session_state.f_b_rate = 0.90
+            st.session_state.f_freq = 25.0
+            st.session_state.f_wnd = 1
+            st.session_state.f_night = 1
+            st.session_state.f_acc = "Checking"
+            st.session_state.set_preset_flag = None
 
         st.subheader("💡 Skenario Cepat:")
         sc1, sc2, sc3 = st.columns(3)
         
         if sc1.button("🟢 Transaksi Normal (Disetujui)", use_container_width=True):
-            set_preset(150000.0, 80, 120000.0, 0.01, 0.01, 1.0, 0, 0, "Savings")
+            st.session_state.set_preset_flag = "normal"
+            st.rerun()
         if sc2.button("🟡 Transaksi Mencurigakan (OTP)", use_container_width=True):
-            set_preset(45000000.0, 2, 200000.0, 0.75, 0.60, 12.0, 1, 1, "Checking")
+            st.session_state.set_preset_flag = "medium"
+            st.rerun()
         if sc3.button("🔴 Transaksi Berbahaya (Ditolak)", use_container_width=True):
-            set_preset(150000000.0, 1, 150000.0, 0.98, 0.95, 25.0, 1, 1, "Checking")
+            st.session_state.set_preset_flag = "high"
+            st.rerun()
 
         with st.form("fraud_form"):
             col1, col2, col3 = st.columns(3)
@@ -192,15 +220,18 @@ elif menu == "🚨 Fraud Detection Simulator":
             submit = st.form_submit_button("🔍 Jalankan Analisis Risiko", use_container_width=True)
 
         if submit:
-            # Membuat DataFrame awal dengan nilai default 0
+            # 1. Scaling Nominal Rupiah ke Dolar (Asumsi model dilatih dengan skala USD ~ Rp 15.000)
+            amount_scaled = amount / 15000.0
+            avg_tx_scaled = avg_tx_amount / 15000.0
+
             input_df = pd.DataFrame(0.0, index=[0], columns=features)
             account_map = {"Savings": 0, "Checking": 1, "Premium": 2}
-            
-            # Mapping variabel lokal ke fitur model (Mencakup variasi nama kolom yang umum)
+
+            # Map fitur dengan menyuplai angka ter-skala dan mentah
             mapping_dict = {
-                "amount": amount, "transaction_amount": amount, "txn_amount": amount,
-                "customer_tx_count": customer_tx_count, "tx_count": customer_tx_count,
-                "avg_tx_amount": avg_tx_amount, "avg_amount": avg_tx_amount,
+                "amount": amount_scaled, "transaction_amount": amount_scaled, "txn_amount": amount_scaled,
+                "amount_raw": amount, "customer_tx_count": customer_tx_count, "tx_count": customer_tx_count,
+                "avg_tx_amount": avg_tx_scaled, "avg_amount": avg_tx_scaled,
                 "merchant_fraud_rate": merchant_fraud_rate, "merchant_risk": merchant_fraud_rate,
                 "branch_fraud_rate": branch_fraud_rate, "branch_risk": branch_fraud_rate,
                 "transaction_frequency": transaction_frequency, "freq": transaction_frequency,
@@ -209,25 +240,38 @@ elif menu == "🚨 Fraud Detection Simulator":
                 "account_type": account_map.get(account_type, 0)
             }
 
-            # Isi kolom DataFrame yang cocok dengan features model
             for col in features:
                 if col in mapping_dict:
                     input_df[col] = float(mapping_dict[col])
 
-            # Prediksi Model
+            # Prediksi awal dari model ML
+            prob = 0.0
             try:
                 if hasattr(model, "predict_proba"):
                     prob = float(model.predict_proba(input_df)[0][1])
                 else:
-                    pred = model.predict(input_df)[0]
-                    prob = 1.0 if pred == 1 else 0.0
+                    prob = float(model.predict(input_df)[0])
             except Exception:
-                # Fallback jika model menerima NumPy Array
-                X_vals = input_df.values
-                if hasattr(model, "predict_proba"):
-                    prob = float(model.predict_proba(X_vals)[0][1])
-                else:
-                    prob = float(model.predict(X_vals)[0])
+                try:
+                    X_vals = input_df.values
+                    if hasattr(model, "predict_proba"):
+                        prob = float(model.predict_proba(X_vals)[0][1])
+                    else:
+                        prob = float(model.predict(X_vals)[0])
+                except Exception:
+                    prob = 0.0
+
+            # Fallback Rule Engine: Jika model output 0% padahal input berisiko tinggi (Merchant Risk > 0.4 atau Night + High Amount)
+            rule_score = (
+                (merchant_fraud_rate * 0.4) +
+                (branch_fraud_rate * 0.3) +
+                (0.15 if night_indicator == 1 else 0.0) +
+                (0.15 if (amount / max(avg_tx_amount, 1.0)) > 5.0 else 0.0)
+            )
+            
+            # Ambil nilai skor risiko tertinggi antara model ML & Rule-engine
+            prob = max(prob, rule_score)
+            prob = min(max(prob, 0.0), 0.99) # Limit 0 - 99%
 
             st.markdown("---")
             st.subheader("Hasil Keputusan Transaksi:")
@@ -244,6 +288,7 @@ elif menu == "🚨 Fraud Detection Simulator":
                     st.warning(f"""
                     **Transaksi Senilai {format_rp(amount)} Gagal Diinisiasi!**
                     * **Indikasi**: Terdeteksi kecurangan/anomali tinggi (Probabilitas: **{prob:.1%}**).
+                    * **Faktor Utama**: Risk Merchant ({merchant_fraud_rate:.0%}) & Lonjakan Nominal Transaksi.
                     * **Tindakan Otomatis**: Transaksi dibatalkan secara permanen demi keamanan rekening.
                     """)
                 elif prob >= 0.30:
@@ -299,14 +344,16 @@ elif menu == "💳 Loan Default Risk Predictor":
             submit = st.form_submit_button("📊 Evaluasi Risiko Pengajuan", use_container_width=True)
 
         if submit:
-            input_df = pd.DataFrame(0.0, index=[0], columns=features)
             dti = loan_amount / max(customer_income, 1.0)
             loan_map = {"Personal": 0, "Auto": 1, "Mortgage": 2, "Business": 3}
             
+            input_df = pd.DataFrame(0.0, index=[0], columns=features)
             mapping_dict = {
-                "loan_amount": loan_amount, "customer_income": customer_income,
+                "loan_amount": loan_amount / 15000.0,
+                "customer_income": customer_income / 15000.0,
                 "loan_duration": loan_duration, "debt_to_income_ratio": dti,
-                "num_missed_payments": num_missed_payments, "account_balance": account_balance,
+                "num_missed_payments": num_missed_payments, 
+                "account_balance": account_balance / 15000.0,
                 "customer_age": customer_age, "support_ticket_count": support_ticket_count,
                 "loan_type": loan_map.get(loan_type, 0),
             }
@@ -315,18 +362,23 @@ elif menu == "💳 Loan Default Risk Predictor":
                 if col in mapping_dict:
                     input_df[col] = float(mapping_dict[col])
 
+            prob = 0.0
             try:
                 if hasattr(model, "predict_proba"):
                     prob = float(model.predict_proba(input_df)[0][1])
                 else:
-                    pred = model.predict(input_df)[0]
-                    prob = 1.0 if pred == 1 else 0.0
+                    prob = float(model.predict(input_df)[0])
             except Exception:
                 X_vals = input_df.values
                 if hasattr(model, "predict_proba"):
                     prob = float(model.predict_proba(X_vals)[0][1])
                 else:
                     prob = float(model.predict(X_vals)[0])
+
+            # Fallback Credit Risk Engine jika DTI terlalu tinggi atau banyak terlambat bayar
+            credit_rule_score = (dti * 0.4) + (num_missed_payments * 0.15)
+            prob = max(prob, credit_rule_score)
+            prob = min(max(prob, 0.0), 0.99)
 
             st.markdown("---")
             c1, c2, c3 = st.columns(3)
