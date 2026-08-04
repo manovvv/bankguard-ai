@@ -108,7 +108,7 @@ if menu == "🏠 Home":
     with col_hero1:
         st.subheader("📌 Project Overview")
         st.write("""
-        Selamat datang di portal presentasi interaktif **Kelompok 14 Data Science Club (DSC)**. 
+        Selamat datang di portal presentasi interaktif **Kelompok 14 Data Science Course (DSC)**. 
         Aplikasi ini dirancang untuk menyajikan alur analisis data secara terstruktur, mulai dari *Executive Summary*, 
         latar belakang masalah, pendataan, eksplorasi data (EDA), pemodelan Machine Learning, hingga rekomendasi keputusan bisnis.
         """)
