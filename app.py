@@ -11,25 +11,32 @@ st.set_page_config(
 )
 
 BASE_DIR = Path(__file__).resolve().parent if "__file__" in locals() else Path(".")
-MODELS_DIR = BASE_DIR / "models"
 
+def find_file(filename):
+    root_path = BASE_DIR / filename
+    models_path = BASE_DIR / "models" / filename
+    if root_path.exists():
+        return root_path
+    elif models_path.exists():
+        return models_path
+    return None
 
 @st.cache_resource
 def load_artifacts():
     artifacts = {}
     
-    fraud_model_path = MODELS_DIR / "fraud_model.pkl"
-    fraud_feat_path = MODELS_DIR / "fraud_features.pkl"
-    loan_model_path = MODELS_DIR / "loan_model.pkl"
-    loan_feat_path = MODELS_DIR / "loan_features.pkl"
+    fraud_model_path = find_file("fraud_model.pkl")
+    fraud_feat_path = find_file("fraud_features.pkl")
+    loan_model_path = find_file("loan_model.pkl")
+    loan_feat_path = find_file("loan_features.pkl")
 
-    if fraud_model_path.exists() and fraud_feat_path.exists():
+    if fraud_model_path and fraud_feat_path:
         with open(fraud_model_path, "rb") as f:
             artifacts["fraud_model"] = pickle.load(f)
         with open(fraud_feat_path, "rb") as f:
             artifacts["fraud_features"] = pickle.load(f)
 
-    if loan_model_path.exists() and loan_feat_path.exists():
+    if loan_model_path and loan_feat_path:
         with open(loan_model_path, "rb") as f:
             artifacts["loan_model"] = pickle.load(f)
         with open(loan_feat_path, "rb") as f:
@@ -67,7 +74,7 @@ elif menu == "🚨 Fraud Detection Simulator":
     st.markdown("Masukkan rincian transaksi kartu untuk memprediksi potensi *fraud* secara real-time.")
 
     if "fraud_model" not in artifacts:
-        st.error("Model Fraud (`fraud_model.pkl`) tidak ditemukan di direktori utama.")
+        st.error("Model Fraud (`fraud_model.pkl`) tidak ditemukan di root maupun folder models/.")
     else:
         model = artifacts["fraud_model"]
         features = artifacts["fraud_features"]
@@ -93,7 +100,7 @@ elif menu == "🚨 Fraud Detection Simulator":
             submit = st.form_submit_button("🔍 Prediksi Fraud")
 
         if submit:
-            input_data = pd.DataFrame(0, index=[0], columns=features)
+            input_data = pd.DataFrame(0.0, index=[0], columns=features)
             
             val_map = {
                 "amount": amount,
@@ -111,8 +118,15 @@ elif menu == "🚨 Fraud Detection Simulator":
                 if k in input_data.columns:
                     input_data[k] = v
 
-            if "account_type" in input_data.columns:
-                input_data["account_type"] = input_data["account_type"].astype("category")
+            # Penanganan khusus jika model menggunakan pandas categorical
+            if hasattr(model, "pandas_categorical") and model.pandas_categorical is not None:
+                for col_idx, cats in enumerate(model.pandas_categorical):
+                    col_name = features[col_idx] if col_idx < len(features) else None
+                    if col_name and col_name in input_data.columns:
+                        input_data[col_name] = pd.Categorical(input_data[col_name], categories=cats)
+            else:
+                for col in input_data.select_dtypes(include=['object']).columns:
+                    input_data[col] = input_data[col].astype('category')
 
             pred = model.predict(input_data)[0]
             prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
@@ -135,7 +149,7 @@ elif menu == "💳 Loan Default Risk Predictor":
     st.markdown("Evaluasi profil nasabah untuk memprediksi potensi gagal bayar pinjaman (*Credit Default*).")
 
     if "loan_model" not in artifacts:
-        st.error("Model Risiko Pinjaman (`loan_model.pkl`) tidak ditemukan di direktori utama.")
+        st.error("Model Risiko Pinjaman (`loan_model.pkl`) tidak ditemukan di root maupun folder models/.")
     else:
         model = artifacts["loan_model"]
         features = artifacts["loan_features"]
@@ -160,7 +174,7 @@ elif menu == "💳 Loan Default Risk Predictor":
             submit = st.form_submit_button("📊 Evaluasi Risiko Pinjaman")
 
         if submit:
-            input_data = pd.DataFrame(0, index=[0], columns=features)
+            input_data = pd.DataFrame(0.0, index=[0], columns=features)
             
             dti = loan_amount / max(customer_income, 1.0)
             
@@ -180,8 +194,14 @@ elif menu == "💳 Loan Default Risk Predictor":
                 if k in input_data.columns:
                     input_data[k] = v
 
-            if "loan_type" in input_data.columns:
-                input_data["loan_type"] = input_data["loan_type"].astype("category")
+            if hasattr(model, "pandas_categorical") and model.pandas_categorical is not None:
+                for col_idx, cats in enumerate(model.pandas_categorical):
+                    col_name = features[col_idx] if col_idx < len(features) else None
+                    if col_name and col_name in input_data.columns:
+                        input_data[col_name] = pd.Categorical(input_data[col_name], categories=cats)
+            else:
+                for col in input_data.select_dtypes(include=['object']).columns:
+                    input_data[col] = input_data[col].astype('category')
 
             pred = model.predict(input_data)[0]
             prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
