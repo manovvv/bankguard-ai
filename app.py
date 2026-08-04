@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS untuk tampilan UI yang bersih
+# Custom CSS untuk UI
 st.markdown("""
 <style>
     .stCard {
@@ -58,6 +58,10 @@ def load_artifacts():
     return artifacts
 
 artifacts = load_artifacts()
+
+# Helper untuk format mata uang Rupiah rapi (120.000)
+def format_rp(val):
+    return f"Rp {val:,.0f}".replace(",", ".")
 
 # Helper untuk Gauge Chart Skor Risiko
 def create_gauge_chart(score, title):
@@ -123,7 +127,7 @@ if menu == "Dashboard Utama":
 # ---------------- 2. FRAUD DETECTION SIMULATOR ----------------
 elif menu == "🚨 Fraud Detection Simulator":
     st.title("🚨 Fraud Detection Simulator")
-    st.caption("Simulasikan data transaksi kartu untuk analisis potensi *fraud* secara real-time.")
+    st.caption("Simulasikan data transaksi kartu untuk analisis potensi fraud secara real-time.")
 
     if "fraud_model" not in artifacts:
         st.error("Model Fraud tidak ditemukan.")
@@ -147,8 +151,13 @@ elif menu == "🚨 Fraud Detection Simulator":
             col1, col2, col3 = st.columns(3)
             with col1:
                 amount = st.number_input("Jumlah Transaksi (Rp)", min_value=1000.0, value=default_vals["amount"], step=50000.0, format="%.0f")
+                st.caption(f"Terbaca: **{format_rp(amount)}**")
+                
                 customer_tx_count = st.number_input("Total Riwayat Transaksi Nasabah", min_value=1, value=default_vals["cust_tx"])
+                
                 avg_tx_amount = st.number_input("Rata-rata Nominal Transaksi (Rp)", min_value=1000.0, value=default_vals["avg_tx"], step=50000.0, format="%.0f")
+                st.caption(f"Terbaca: **{format_rp(avg_tx_amount)}**")
+
             with col2:
                 merchant_fraud_rate = st.slider("Tingkat Risk Merchant", 0.0, 1.0, default_vals["m_rate"])
                 branch_fraud_rate = st.slider("Tingkat Risk Cabang", 0.0, 1.0, default_vals["b_rate"])
@@ -193,12 +202,11 @@ elif menu == "🚨 Fraud Detection Simulator":
                 st.plotly_chart(create_gauge_chart(prob, "Skor Indikasi Fraud"), use_container_width=True)
 
             with res_col2:
-                # LOGIKA STATUS TRANSAKSI DITOLAK / DISETUJUI
                 if prob >= 0.70:
                     st.error("⛔ **STATUS: TRANSAKSI DITOLAK (DECLINED)**")
                     st.metric(label="Keputusan Sistem", value="BLOCKED", delta="-HIGH RISK", delta_color="inverse")
                     st.warning(f"""
-                    **Transaksi Senilai Rp {amount:,.0f} Gagal Diinisiasi!**
+                    **Transaksi Senilai {format_rp(amount)} Gagal Diinisiasi!**
                     * **Indikasi**: Terdeteksi kecurangan/anomali tinggi (Probabilitas: **{prob:.1%}**).
                     * **Tindakan Otomatis**: Transaksi dibatalkan secara permanen demi keamanan rekening.
                     """)
@@ -206,22 +214,22 @@ elif menu == "🚨 Fraud Detection Simulator":
                     st.warning("⚠️ **STATUS: DITAHAN / BUTUH VERIFIKASI (OTP)**")
                     st.metric(label="Keputusan Sistem", value="CHALLENGE", delta="MEDIUM RISK", delta_color="off")
                     st.info(f"""
-                    **Transaksi Memerlukan OTP Kode:**
+                    **Transaksi Senilai {format_rp(amount)} Memerlukan OTP Kode:**
                     * Probabilitas Risiko: **{prob:.1%}**.
-                    * Silakan minta nasabah memasukkan kode verifikasi 6-digit yang telah dikirim via SMS.
+                    * Minta nasabah memasukkan kode verifikasi 6-digit.
                     """)
                 else:
                     st.success("✅ **STATUS: TRANSAKSI DISETUJUI (APPROVED)**")
                     st.metric(label="Keputusan Sistem", value="SUCCESS", delta="LOW RISK")
                     st.info(f"""
-                    **Transaksi Senilai Rp {amount:,.0f} Berhasil!**
+                    **Transaksi Senilai {format_rp(amount)} Berhasil!**
                     * Transaksi aman dan diproses ke core banking.
                     """)
 
 # ---------------- 3. LOAN DEFAULT RISK PREDICTOR ----------------
 elif menu == "💳 Loan Default Risk Predictor":
     st.title("💳 Loan Default Risk Predictor")
-    st.caption("Evaluasi profil pemohon kredit pinjaman dan risiko gagal bayar (*default*).")
+    st.caption("Evaluasi profil pemohon kredit pinjaman dan risiko gagal bayar (default).")
 
     if "loan_model" not in artifacts:
         st.error("Model Pinjaman tidak ditemukan.")
@@ -233,12 +241,21 @@ elif menu == "💳 Loan Default Risk Predictor":
             col1, col2, col3 = st.columns(3)
             with col1:
                 loan_amount = st.number_input("Pengajuan Pinjaman (Rp)", min_value=1000000.0, value=50000000.0, step=1000000.0, format="%.0f")
+                st.caption(f"Terbaca: **{format_rp(loan_amount)}**")
+                
                 customer_income = st.number_input("Pendapatan Tahunan (Rp)", min_value=1000000.0, value=120000000.0, step=5000000.0, format="%.0f")
+                st.caption(f"Terbaca: **{format_rp(customer_income)}**")
+                
                 loan_duration = st.number_input("Tenor Pinjaman (Bulan)", min_value=6, value=36)
+
             with col2:
                 num_missed_payments = st.number_input("Jumlah Terlambat Bayar Sebelumnya", min_value=0, value=0)
+                
                 account_balance = st.number_input("Saldo Tabungan Saat Ini (Rp)", min_value=0.0, value=15000000.0, step=1000000.0, format="%.0f")
+                st.caption(f"Terbaca: **{format_rp(account_balance)}**")
+                
                 loan_type = st.selectbox("Jenis Pinjaman", ["Personal", "Auto", "Mortgage", "Business"])
+
             with col3:
                 customer_age = st.number_input("Usia Pemohon", min_value=18, value=32)
                 support_ticket_count = st.number_input("Jumlah Komplain Nasabah", min_value=0, value=0)
@@ -274,7 +291,6 @@ elif menu == "💳 Loan Default Risk Predictor":
             c1.metric("Rasio DTI (Debt-to-Income)", f"{dti:.2%}")
             c2.metric("Probabilitas Gagal Bayar", f"{prob:.2%}")
             
-            # KEPUTUSAN PENGAJUAN PINJAMAN (DISETUJUI / DITOLAK)
             if prob >= 0.50:
                 c3.metric("Rekomendasi Pinjaman", "DITOLAK ❌", delta="-HIGH RISK", delta_color="inverse")
             else:
@@ -289,6 +305,8 @@ elif menu == "💳 Loan Default Risk Predictor":
                     x=[loan_amount, customer_income, account_balance],
                     y=['Pinjaman', 'Pendapatan/Thn', 'Saldo Tabungan'],
                     orientation='h',
+                    text=[format_rp(loan_amount), format_rp(customer_income), format_rp(account_balance)],
+                    textposition='auto',
                     marker_color=['#ef5350', '#26a69a', '#42a5f5']
                 ))
                 fig_bar.update_layout(height=230, margin=dict(l=20, r=20, t=20, b=20))
