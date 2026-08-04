@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Executive Dashboard - Credit & Risk Decision System",
-    page_icon="🛡️",
+    page_icon="📊",
     layout="wide"
 )
 
@@ -16,15 +16,10 @@ def format_rupiah(val):
         return "Rp 0"
     return f"Rp {val:,.0f}".replace(",", ".")
 
-# Header Utama & Penjelasan Fungsi Aplikasi
-st.title("🛡️ Credit Risk Decision & Analytics Platform")
+# Header Utama & Penjelasan Fungsi Aplikasi dalam Paragraf
+st.title("📊 Executive Dashboard & Risk Analytics")
 st.markdown("""
-Aplikasi ini dirancang sebagai **sistem analisis dan keputusan risiko kredit berbasis Artificial Intelligence (AI)**. 
-
-**Fungsi Utama Aplikasi:**
-1. **Monitoring Profil Transaksi**: Menganalisis sebaran transaksi, tingkat pendapatan, dan tingkat risiko default nasabah.
-2. **Eksplorasi Data (EDA)**: Menemukan pola korelasi dan sebaran risiko untuk mendukung pembuatan kebijakan kredit.
-3. **Evaluasi & Simulator Prediksi Machine Learning**: Menguji kelayakan pengajuan transaksi/kredit secara instan (real-time) dengan output skor probabilitas risiko.
+Aplikasi ini merupakan platform analisis interaktif dan sistem pengambilan keputusan risiko kredit berbasis Artificial Intelligence (AI). Platform ini berfungsi untuk membantu tim analis dalam memantau portofolio transaksi nasabah, menemukan pola sebaran risiko melalui analisis visual (EDA), serta menguji performa model *Machine Learning* untuk prediksi risiko *default*. Melalui simulator interaktif yang tersedia, pengguna dapat melakukan evaluasi kelayakan kredit secara *real-time* berdasarkan masukan parameter seperti pendapatan, nominal transaksi, dan skor risiko internal tanpa adanya batasan minimum input angka.
 """)
 st.markdown("---")
 
@@ -137,7 +132,6 @@ st.write("Masukan parameter di bawah untuk menguji secara otomatis apakah pengaj
 with st.form("prediction_form"):
     c1, c2, c3 = st.columns(3)
     with c1:
-        # Tanpa batas minimum angka (min_value dihilangkan/diset 0)
         input_age = st.number_input("Usia Nasabah", value=30, step=1)
         input_income = st.number_input("Pendapatan Tahunan (Rp)", value=10000000, step=500000)
         st.caption(f"Format Terbaca: **{format_rupiah(input_income)}**")
@@ -151,7 +145,6 @@ with st.form("prediction_form"):
     submit = st.form_submit_button("🚀 Evaluasi Keputusan AI", use_container_width=True)
 
 if submit:
-    # Kalkulasi penentuan estimasi risiko
     safe_income = max(input_income, 1) if input_income > 0 else 1
     calculated_risk = (input_tx / safe_income) * 2 + (input_score * 0.5)
     calculated_risk = min(max(calculated_risk, 0.05), 0.98)
