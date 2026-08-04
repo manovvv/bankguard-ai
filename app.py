@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS untuk UI
+# Custom CSS
 st.markdown("""
 <style>
     .stCard {
@@ -59,11 +59,9 @@ def load_artifacts():
 
 artifacts = load_artifacts()
 
-# Helper untuk format mata uang Rupiah rapi (120.000)
 def format_rp(val):
     return f"Rp {val:,.0f}".replace(",", ".")
 
-# Helper untuk Gauge Chart Skor Risiko
 def create_gauge_chart(score, title):
     color = "green" if score < 0.3 else "orange" if score < 0.7 else "red"
     fig = go.Figure(go.Indicator(
@@ -112,7 +110,7 @@ if menu == "Dashboard Utama":
         st.subheader("🚨 Fraud Risk Engine")
         if "fraud_model" in artifacts:
             st.success("Status: **Ready & Loaded** ✅")
-            st.info("Model LightGBM terkonfigurasi untuk memonitor anomali transaksi real-time.")
+            st.info("Model terkonfigurasi untuk memonitor anomali transaksi real-time.")
         else:
             st.error("Status: **Not Found** ❌")
 
@@ -135,63 +133,101 @@ elif menu == "🚨 Fraud Detection Simulator":
         model = artifacts["fraud_model"]
         features = artifacts["fraud_features"]
 
+        # Inisialisasi session_state jika belum ada
+        if "f_amount" not in st.session_state:
+            st.session_state.f_amount = 150000.0
+            st.session_state.f_cust_tx = 80
+            st.session_state.f_avg_tx = 120000.0
+            st.session_state.f_m_rate = 0.01
+            st.session_state.f_b_rate = 0.01
+            st.session_state.f_freq = 1.0
+            st.session_state.f_wnd = 0
+            st.session_state.f_night = 0
+            st.session_state.f_acc = "Savings"
+
+        # Fungsi Update Preset via Button
+        def set_preset(amount, cust_tx, avg_tx, m_rate, b_rate, freq, wnd, night, acc):
+            st.session_state.f_amount = amount
+            st.session_state.f_cust_tx = cust_tx
+            st.session_state.f_avg_tx = avg_tx
+            st.session_state.f_m_rate = m_rate
+            st.session_state.f_b_rate = b_rate
+            st.session_state.f_freq = freq
+            st.session_state.f_wnd = wnd
+            st.session_state.f_night = night
+            st.session_state.f_acc = acc
+
         st.subheader("💡 Skenario Cepat:")
         sc1, sc2, sc3 = st.columns(3)
         
-        default_vals = {"amount": 250000.0, "cust_tx": 45, "avg_tx": 150000.0, "m_rate": 0.02, "b_rate": 0.01, "freq": 1.5, "wnd": 0, "night": 0, "acc": "Savings"}
-        
-        if sc1.button("🟢 Transaksi Normal (Disetujui)"):
-            default_vals = {"amount": 150000.0, "cust_tx": 80, "avg_tx": 120000.0, "m_rate": 0.01, "b_rate": 0.01, "freq": 1.0, "wnd": 0, "night": 0, "acc": "Savings"}
-        if sc2.button("🟡 Transaksi Mencurigakan (OTP)"):
-            default_vals = {"amount": 3500000.0, "cust_tx": 12, "avg_tx": 500000.0, "m_rate": 0.15, "b_rate": 0.10, "freq": 5.0, "wnd": 1, "night": 0, "acc": "Checking"}
-        if sc3.button("🔴 Transaksi Berbahaya (Ditolak)"):
-            default_vals = {"amount": 25000000.0, "cust_tx": 2, "avg_tx": 300000.0, "m_rate": 0.65, "b_rate": 0.40, "freq": 12.0, "wnd": 1, "night": 1, "acc": "Checking"}
+        if sc1.button("🟢 Transaksi Normal (Disetujui)", use_container_width=True):
+            set_preset(150000.0, 80, 120000.0, 0.01, 0.01, 1.0, 0, 0, "Savings")
+        if sc2.button("🟡 Transaksi Mencurigakan (OTP)", use_container_width=True):
+            set_preset(45000000.0, 2, 200000.0, 0.75, 0.60, 12.0, 1, 1, "Checking")
+        if sc3.button("🔴 Transaksi Berbahaya (Ditolak)", use_container_width=True):
+            set_preset(150000000.0, 1, 150000.0, 0.98, 0.95, 25.0, 1, 1, "Checking")
 
         with st.form("fraud_form"):
             col1, col2, col3 = st.columns(3)
             with col1:
-                amount = st.number_input("Jumlah Transaksi (Rp)", min_value=1000.0, value=default_vals["amount"], step=50000.0, format="%.0f")
+                amount = st.number_input("Jumlah Transaksi (Rp)", min_value=1000.0, value=float(st.session_state.f_amount), step=50000.0, format="%.0f")
                 st.caption(f"Terbaca: **{format_rp(amount)}**")
                 
-                customer_tx_count = st.number_input("Total Riwayat Transaksi Nasabah", min_value=1, value=default_vals["cust_tx"])
+                customer_tx_count = st.number_input("Total Riwayat Transaksi Nasabah", min_value=1, value=int(st.session_state.f_cust_tx))
                 
-                avg_tx_amount = st.number_input("Rata-rata Nominal Transaksi (Rp)", min_value=1000.0, value=default_vals["avg_tx"], step=50000.0, format="%.0f")
+                avg_tx_amount = st.number_input("Rata-rata Nominal Transaksi (Rp)", min_value=1000.0, value=float(st.session_state.f_avg_tx), step=50000.0, format="%.0f")
                 st.caption(f"Terbaca: **{format_rp(avg_tx_amount)}**")
 
             with col2:
-                merchant_fraud_rate = st.slider("Tingkat Risk Merchant", 0.0, 1.0, default_vals["m_rate"])
-                branch_fraud_rate = st.slider("Tingkat Risk Cabang", 0.0, 1.0, default_vals["b_rate"])
-                transaction_frequency = st.number_input("Frekuensi Transaksi/Hari", min_value=0.1, value=default_vals["freq"])
+                merchant_fraud_rate = st.slider("Tingkat Risk Merchant", 0.0, 1.0, float(st.session_state.f_m_rate))
+                branch_fraud_rate = st.slider("Tingkat Risk Cabang", 0.0, 1.0, float(st.session_state.f_b_rate))
+                transaction_frequency = st.number_input("Frekuensi Transaksi/Hari", min_value=0.1, value=float(st.session_state.f_freq))
+
             with col3:
-                weekend_indicator = st.selectbox("Transaksi Akhir Pekan?", [0, 1], index=default_vals["wnd"], format_func=lambda x: "Ya" if x == 1 else "Tidak")
-                night_indicator = st.selectbox("Transaksi Malam Hari (00.00-06.00)?", [0, 1], index=default_vals["night"], format_func=lambda x: "Ya" if x == 1 else "Tidak")
-                acc_idx = ["Savings", "Checking", "Premium"].index(default_vals["acc"])
+                weekend_indicator = st.selectbox("Transaksi Akhir Pekan?", [0, 1], index=int(st.session_state.f_wnd), format_func=lambda x: "Ya" if x == 1 else "Tidak")
+                night_indicator = st.selectbox("Transaksi Malam Hari (00.00-06.00)?", [0, 1], index=int(st.session_state.f_night), format_func=lambda x: "Ya" if x == 1 else "Tidak")
+                acc_idx = ["Savings", "Checking", "Premium"].index(st.session_state.f_acc)
                 account_type = st.selectbox("Tipe Akun", ["Savings", "Checking", "Premium"], index=acc_idx)
 
             submit = st.form_submit_button("🔍 Jalankan Analisis Risiko", use_container_width=True)
 
         if submit:
-            input_data = pd.DataFrame(0.0, index=[0], columns=features)
+            # Membuat DataFrame awal dengan nilai default 0
+            input_df = pd.DataFrame(0.0, index=[0], columns=features)
             account_map = {"Savings": 0, "Checking": 1, "Premium": 2}
             
-            val_map = {
-                "amount": amount, "customer_tx_count": customer_tx_count,
-                "avg_tx_amount": avg_tx_amount, "merchant_fraud_rate": merchant_fraud_rate,
-                "branch_fraud_rate": branch_fraud_rate, "transaction_frequency": transaction_frequency,
-                "weekend_transaction_indicator": weekend_indicator, "night_transaction_indicator": night_indicator,
-                "account_type": account_map.get(account_type, 0),
+            # Mapping variabel lokal ke fitur model (Mencakup variasi nama kolom yang umum)
+            mapping_dict = {
+                "amount": amount, "transaction_amount": amount, "txn_amount": amount,
+                "customer_tx_count": customer_tx_count, "tx_count": customer_tx_count,
+                "avg_tx_amount": avg_tx_amount, "avg_amount": avg_tx_amount,
+                "merchant_fraud_rate": merchant_fraud_rate, "merchant_risk": merchant_fraud_rate,
+                "branch_fraud_rate": branch_fraud_rate, "branch_risk": branch_fraud_rate,
+                "transaction_frequency": transaction_frequency, "freq": transaction_frequency,
+                "weekend_transaction_indicator": weekend_indicator, "is_weekend": weekend_indicator,
+                "night_transaction_indicator": night_indicator, "is_night": night_indicator,
+                "account_type": account_map.get(account_type, 0)
             }
-            for k, v in val_map.items():
-                if k in input_data.columns:
-                    input_data[k] = float(v)
 
-            X_input = input_data.values
+            # Isi kolom DataFrame yang cocok dengan features model
+            for col in features:
+                if col in mapping_dict:
+                    input_df[col] = float(mapping_dict[col])
+
+            # Prediksi Model
             try:
-                pred = model.predict(X_input)[0]
-                prob = model.predict_proba(X_input)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+                if hasattr(model, "predict_proba"):
+                    prob = float(model.predict_proba(input_df)[0][1])
+                else:
+                    pred = model.predict(input_df)[0]
+                    prob = 1.0 if pred == 1 else 0.0
             except Exception:
-                pred = model.predict(input_data)[0]
-                prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+                # Fallback jika model menerima NumPy Array
+                X_vals = input_df.values
+                if hasattr(model, "predict_proba"):
+                    prob = float(model.predict_proba(X_vals)[0][1])
+                else:
+                    prob = float(model.predict(X_vals)[0])
 
             st.markdown("---")
             st.subheader("Hasil Keputusan Transaksi:")
@@ -263,28 +299,34 @@ elif menu == "💳 Loan Default Risk Predictor":
             submit = st.form_submit_button("📊 Evaluasi Risiko Pengajuan", use_container_width=True)
 
         if submit:
-            input_data = pd.DataFrame(0.0, index=[0], columns=features)
+            input_df = pd.DataFrame(0.0, index=[0], columns=features)
             dti = loan_amount / max(customer_income, 1.0)
             loan_map = {"Personal": 0, "Auto": 1, "Mortgage": 2, "Business": 3}
             
-            val_map = {
+            mapping_dict = {
                 "loan_amount": loan_amount, "customer_income": customer_income,
                 "loan_duration": loan_duration, "debt_to_income_ratio": dti,
                 "num_missed_payments": num_missed_payments, "account_balance": account_balance,
                 "customer_age": customer_age, "support_ticket_count": support_ticket_count,
                 "loan_type": loan_map.get(loan_type, 0),
             }
-            for k, v in val_map.items():
-                if k in input_data.columns:
-                    input_data[k] = float(v)
+            
+            for col in features:
+                if col in mapping_dict:
+                    input_df[col] = float(mapping_dict[col])
 
-            X_input = input_data.values
             try:
-                pred = model.predict(X_input)[0]
-                prob = model.predict_proba(X_input)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+                if hasattr(model, "predict_proba"):
+                    prob = float(model.predict_proba(input_df)[0][1])
+                else:
+                    pred = model.predict(input_df)[0]
+                    prob = 1.0 if pred == 1 else 0.0
             except Exception:
-                pred = model.predict(input_data)[0]
-                prob = model.predict_proba(input_data)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+                X_vals = input_df.values
+                if hasattr(model, "predict_proba"):
+                    prob = float(model.predict_proba(X_vals)[0][1])
+                else:
+                    prob = float(model.predict(X_vals)[0])
 
             st.markdown("---")
             c1, c2, c3 = st.columns(3)
