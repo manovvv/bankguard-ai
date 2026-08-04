@@ -59,10 +59,10 @@ df = generate_data()
 # 3. HEADER & SUMMARY METRICS
 # ----------------------------------------------------
 st.title("📊 Credit Risk & Multi-Factor Fraud Analytics Platform")
-st.caption("Integrated Analytics Dashboard for Loan Assessment & Transaction Fraud Detection")
+st.caption("Integrated Analytics Dashboard for Loan Assessment & Automated Fraud Detection Engine")
 
 st.markdown("""
-Platform analitik ini memisahkan pengujian menjadi dua modul utama: **Loan Risk Analytics** (kelayakan kredit dan potensi gagal bayar) serta **Fraud Monitoring** (deteksi transaksi anomali berbasis frekuensi harian, waktu transaksi, dan nominal).
+Platform analitik keputusan berbasis dua modul utama: **Loan Risk Analytics** (kelayakan kredit dan risiko gagal bayar) serta **Fraud Monitoring** dengan **Skor Anomali Otomatis** yang mengkalkulasi tingkat risiko berdasarkan gabungan frekuensi transaksi, waktu (jam malam), nominal, dan rasio profil finansial.
 """)
 
 # Executive Metrics Summary
@@ -168,55 +168,62 @@ with tab_model:
 st.markdown("---")
 
 # ----------------------------------------------------
-# 7. REAL-TIME MULTI-FACTOR SIMULATOR
+# 7. AUTOMATED REAL-TIME SIMULATOR
 # ----------------------------------------------------
-st.subheader("🎮 Live Decision Simulator (Loan & Fraud)")
-st.caption("Masukkan parameter transaksi untuk mengevaluasi kelayakan pinjaman dan risiko kecurangan secara otomatis.")
+st.subheader("🎮 Live Automated Decision Simulator (Loan & Fraud)")
+st.caption("Masukkan parameter transaksi di bawah. Sistem AI akan **menghitung Skor Anomali Perilaku secara otomatis** tanpa input manual.")
 
 with st.form("prediction_form"):
-    col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+    col_s1, col_s2, col_s3 = st.columns(3)
     
     with col_s1:
-        st.markdown("**1. Profil Demografi**")
+        st.markdown("**1. Profil Demografi Nasabah**")
         input_age = st.number_input("Usia Nasabah", value=30, step=1)
         input_income = st.number_input("Pendapatan Tahunan (Rp)", value=12000000, step=500000)
         st.caption(f"Terbaca: **{format_rupiah(input_income)}**")
         
     with col_s2:
-        st.markdown("**2. Parameter Transaksi**")
+        st.markdown("**2. Rincian Transaksi**")
         input_tx = st.number_input("Nominal Transaksi (Rp)", value=2500000, step=100000)
         st.caption(f"Terbaca: **{format_rupiah(input_tx)}**")
         input_cat = st.selectbox("Segmen Kategori", ["Personal", "Retail", "Corporate"])
         
     with col_s3:
-        st.markdown("**3. Pola Perilaku**")
+        st.markdown("**3. Pola & Waktu Transaksi**")
         input_freq = st.number_input("Frekuensi Transaksi Hari Ini", value=2, step=1)
         input_hour = st.slider("Jam Transaksi (00:00 - 23:00)", 0, 23, 14)
         
-    with col_s4:
-        st.markdown("**4. Skor Risk Internal**")
-        input_score = st.slider("Skor Anomali Perilaku (0-1)", 0.0, 1.0, 0.25)
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-    submit = st.form_submit_button("🚀 Jalankan Evaluasi Keputusan AI", use_container_width=True)
+    submit = st.form_submit_button("🚀 Evaluasi Keputusan dengan Algoritma Otomatis", use_container_width=True)
 
 # Processing Results
 if submit:
     safe_income = max(input_income, 1) if input_income > 0 else 1
     
-    # Calculation Logic
-    loan_risk = min(max((input_tx / safe_income) * 1.8 + (input_score * 0.3), 0.05), 0.98)
-    
+    # --- ALGORITMA SKOR ANOMALI OTOMATIS (AUTOMATED ANOMALY ENGINE) ---
     is_night = 1 if (input_hour >= 23 or input_hour <= 4) else 0
-    night_factor = 0.25 if is_night else 0.0
-    freq_factor = min((input_freq / 10) * 0.3, 0.3)
-    tx_factor = (input_tx / safe_income) * 0.8
-    score_factor = input_score * 0.4
     
-    fraud_risk = min(max(tx_factor + night_factor + freq_factor + score_factor, 0.02), 0.99)
+    # 1. Anomali Waktu (Malam hari: +0.35)
+    time_anomaly = 0.35 if is_night else 0.05
+    
+    # 2. Anomali Frekuensi (>8x transaksi/hari: bertahap naik hingga +0.35)
+    freq_anomaly = min(max((input_freq - 3) * 0.05, 0.0), 0.35)
+    
+    # 3. Anomali Lonjakan Nominal dibanding Pendapatan Bulanan (Est: Income/12)
+    monthly_income = safe_income / 12
+    tx_ratio = input_tx / monthly_income
+    tx_anomaly = min(max((tx_ratio - 0.2) * 0.4, 0.0), 0.30)
+    
+    # Total Skor Anomali Otomatis (Skala 0.0 - 1.0)
+    auto_anomaly_score = min(max(time_anomaly + freq_anomaly + tx_anomaly, 0.05), 0.99)
+    
+    # --- EVALUASI LOAN & FRAUD RISK ---
+    loan_risk = min(max((input_tx / safe_income) * 1.8 + (auto_anomaly_score * 0.2), 0.05), 0.98)
+    fraud_risk = auto_anomaly_score
 
-    # Result Section Header
+    # Output Metric Banner untuk Skor Anomali Terkalkulasi
     st.markdown("### 📋 Hasil Evaluasi Keputusan AI")
+    st.info(f"🤖 **Skor Anomali Perilaku Terkalkulasi Otomatis:** `{auto_anomaly_score:.2f}` / 1.00 (Dihitung berdasarkan indikator Waktu, Frekuensi, dan Rasio Nominal)")
+
     col_res1, col_res2 = st.columns(2)
     
     with col_res1:
@@ -262,13 +269,11 @@ if submit:
         
         fraud_reasons = []
         if is_night:
-            fraud_reasons.append("Transaksi dilakukan pada jam malam (23:00 - 04:00)")
+            fraud_reasons.append("Pola Waktu Abnormal: Transaksi dilakukan pada jam malam (23:00 - 04:00)")
         if input_freq > 8:
-            fraud_reasons.append(f"Frekuensi transaksi harian sangat tinggi ({input_freq}x)")
-        if input_score > 0.6:
-            fraud_reasons.append("Skor anomali perilaku internal tinggi")
-        if (input_tx / safe_income) > 0.3:
-            fraud_reasons.append("Lonjakan nominal transaksi tidak wajar")
+            fraud_reasons.append(f"Pola Frekuensi Anomali: Frekuensi transaksi sangat tinggi ({input_freq}x per hari)")
+        if tx_ratio > 0.5:
+            fraud_reasons.append(f"Pola Nominal Ekstrem: Nominal transaksi mencapai {tx_ratio:.1f}x dari estimasi pendapatan bulanan")
 
         if fraud_risk > 0.4:
             st.warning("⚠️ **PERINGATAN: TRANSAKSI MENCURIGAKAN**\n\n" + "\n".join([f"- {r}" for r in fraud_reasons]))
